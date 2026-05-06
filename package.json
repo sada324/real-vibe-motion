@@ -7,13 +7,16 @@
   "private": true,
   "dependencies": {
     "@remotion/cli": "4.0.457",
+    "@remotion/player": "^4.0.457",
+    "@remotion/tailwind-v4": "4.0.457",
     "@remotion/zod-types": "4.0.457",
+    "@vitejs/plugin-react": "^6.0.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "remotion": "4.0.457",
-    "zod": "4.3.6",
-    "@remotion/tailwind-v4": "4.0.457",
-    "tailwindcss": "4.0.0"
+    "tailwindcss": "4.0.0",
+    "vite": "^8.0.10",
+    "zod": "4.3.6"
   },
   "devDependencies": {
     "@remotion/eslint-config-flat": "4.0.457",
@@ -25,6 +28,7 @@
   },
   "scripts": {
     "dev": "remotion studio",
+    "landing": "vite --config vite.config.ts",
     "build": "remotion bundle",
     "upgrade": "remotion upgrade",
     "lint": "eslint src && tsc"
