@@ -30,6 +30,6 @@ export const HermesVideo: React.FC = () => (
     <Sequence from={375} durationInFrames={75}  name="Scene5"><Scene5 /></Sequence>
 
     {/* Film grain — persists across all scenes */}
-    <GrainOverlay opacity={0.032} />
+    <GrainOverlay opacity={0.018} />
   </AbsoluteFill>
 );
