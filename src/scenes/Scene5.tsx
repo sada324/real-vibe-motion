@@ -2,7 +2,7 @@ import React from 'react';
 import { AbsoluteFill, useCurrentFrame, useVideoConfig } from 'remotion';
 import { C, FONT } from '../utils/colors';
 import { GlowOrb } from '../components/GlowOrb';
-import { sceneFade, remap, osc, EASE_OUT, springVal, SPRING } from '../utils/animations';
+import { remap, osc, EASE_OUT, springVal, SPRING } from '../utils/animations';
 
 // ─── Scene 5 ─────────────────────────────────────────────────────────────────
 // Sequence duration: 75 frames (local 0–75)
@@ -10,7 +10,7 @@ export const Scene5: React.FC = () => {
   const f = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  const opacity = sceneFade(f, 75, 15, 999, 0); // no explicit fade-out
+  const opacity = remap(f, [0, 15], [0, 1], EASE_OUT); // final scene — fade in only
 
   // "Trade with context." — first line
   const ctx1Sp = springVal(f, 10, fps, 0, 1, SPRING.cinematic);
