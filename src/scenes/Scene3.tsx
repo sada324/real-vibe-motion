@@ -88,6 +88,13 @@ export const Scene3: React.FC = () => {
   const exitO = remap(f, [110, 126], [0, 1], EASE_OUT);
   const exitY = remap(f, [110, 126], [20, 0], EASE_OUT);
 
+  // On exit: balance ticks up to $11,932 and allocation resets to 0%
+  const exitProg  = remap(f, [110, 132], [0, 1], EASE_OUT);
+  const displayBalance = f >= 110 ? Math.round(10000 + exitProg * 1932) : 10000;
+  const displayAlloc   = f >= 110 ? remap(f, [110, 130], [35, 0], EASE_OUT) : allocPct;
+  const balanceColor   = f >= 110 ? C.green : C.black;
+  const allocColor     = f >= 110 ? C.green : C.accent;
+
   // Bottom text
   const txt1O = remap(f, [92, 110], [0, 1], EASE_OUT);
   const txt2O = remap(f, [106, 124], [0, 1], EASE_OUT);
@@ -104,7 +111,7 @@ export const Scene3: React.FC = () => {
 
       {/* ── Portfolio header card ── */}
       <div style={{
-        position: 'absolute', left: 60, top: 52, right: 60,
+        position: 'absolute', left: 60, top: 200, right: 60,
         background: C.bgSoft, borderRadius: 20,
         padding: '20px 28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         opacity: remap(f, [4, 18], [0, 1], EASE_OUT),
@@ -112,19 +119,21 @@ export const Scene3: React.FC = () => {
       }}>
         <div>
           <div style={{ fontFamily: FONT, fontSize: 11, fontWeight: 700, color: C.gray300, letterSpacing: '0.14em', marginBottom: 4 }}>PORTFOLIO BALANCE</div>
-          <div style={{ fontFamily: FONT, fontSize: 36, fontWeight: 800, color: C.black, letterSpacing: '-0.03em', fontVariantNumeric: 'tabular-nums' }}>$10,000</div>
+          <div style={{ fontFamily: FONT, fontSize: 36, fontWeight: 800, color: balanceColor, letterSpacing: '-0.03em', fontVariantNumeric: 'tabular-nums' }}>
+            ${displayBalance.toLocaleString()}
+          </div>
         </div>
         <div style={{ textAlign: 'right' }}>
           <div style={{ fontFamily: FONT, fontSize: 11, fontWeight: 700, color: C.gray300, letterSpacing: '0.14em', marginBottom: 4 }}>ACTIVE IN TRADE</div>
-          <div style={{ fontFamily: FONT, fontSize: 36, fontWeight: 800, color: C.accent, letterSpacing: '-0.03em', fontVariantNumeric: 'tabular-nums' }}>
-            {Math.round(allocPct)}%
+          <div style={{ fontFamily: FONT, fontSize: 36, fontWeight: 800, color: allocColor, letterSpacing: '-0.03em', fontVariantNumeric: 'tabular-nums' }}>
+            {Math.round(displayAlloc)}%
           </div>
         </div>
       </div>
 
       {/* ── Allocation bar ── */}
       <div style={{
-        position: 'absolute', left: 60, top: 168, right: 60,
+        position: 'absolute', left: 60, top: 316, right: 60,
         opacity: remap(f, [14, 28], [0, 1], EASE_OUT),
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
@@ -134,23 +143,23 @@ export const Scene3: React.FC = () => {
         <div style={{ height: 14, borderRadius: 7, background: C.gray500, overflow: 'hidden', position: 'relative' }}>
           <div style={{
             position: 'absolute', left: 0, top: 0, bottom: 0,
-            width: `${allocPct}%`,
+            width: `${displayAlloc}%`,
             background: `linear-gradient(90deg, ${C.accent}, #34AADC)`,
             borderRadius: 7, transition: 'none',
           }} />
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
-          <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 700, color: C.accent, fontVariantNumeric: 'tabular-nums' }}>
-            ${Math.round(allocPct * 100)} of $10,000
+          <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 700, color: allocColor, fontVariantNumeric: 'tabular-nums' }}>
+            ${Math.round(displayAlloc * displayBalance / 100).toLocaleString()} deployed
           </span>
           <span style={{ fontFamily: FONT, fontSize: 12, fontWeight: 700, color: C.gray300, fontVariantNumeric: 'tabular-nums' }}>
-            ${(10000 - Math.round(allocPct * 100)).toLocaleString()}
+            ${Math.round(displayBalance * (1 - displayAlloc / 100)).toLocaleString()} cash
           </span>
         </div>
       </div>
 
       {/* ── Price chart ── */}
-      <div style={{ position: 'absolute', left: 0, top: CY + 170, width: CW, height: CH }}>
+      <div style={{ position: 'absolute', left: 0, top: CY + 318, width: CW, height: CH }}>
         <svg width={CW} height={CH} style={{ display: 'block', overflow: 'visible' }}>
           <defs>
             <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
@@ -259,7 +268,7 @@ export const Scene3: React.FC = () => {
 
       {/* ── Entry stack cards ── */}
       <div style={{
-        position: 'absolute', left: 60, top: 560, right: 60,
+        position: 'absolute', left: 60, top: 708, right: 60,
         display: 'flex', flexDirection: 'column', gap: 10,
       }}>
         {ENTRIES.map((entry, i) => {
