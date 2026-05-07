@@ -14,10 +14,10 @@ const SLIDES = [
   { bg: staticFile('bg-construction.png'), text: 'Trade on the job.' },
 ];
 
-const SLIDE_DUR  = 150;
+const SLIDE_DUR  = 120;
 const TYPE_START = 18;
 const TYPE_SPEED = 2.0;
-const HOLD_END   = 108;
+const HOLD_END   = 88;
 const DEL_SPEED  = 3.5;
 const XFADE      = 20;
 
