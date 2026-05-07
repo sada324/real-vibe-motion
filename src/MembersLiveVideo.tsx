@@ -7,7 +7,7 @@ import {
 } from 'remotion';
 import { GlobeScene } from './GlobeScene';
 
-const GLOBE_START = 760;
+const GLOBE_START = 760; // global frame when globe scene begins
 
 const SPRING = Easing.bezier(0.16, 1, 0.3, 1);
 const EASE   = Easing.bezier(0.4, 0, 0.2, 1);
@@ -33,12 +33,16 @@ function isDone(text: string, frame: number, start: number, speed = 1.8): boolea
   return Math.floor((frame - start) * speed) >= text.length;
 }
 
+// ── Timing ─────────────────────────────────────────────────────────────────────
+
+// Badge — ~5 seconds
 const B_IN     = 18;
 const D_IN     = 48;
 const T_IN     = 76;
 const HOLD_END = 130;
 const CLEAR    = 160;
 
+// Terminal
 const TERM_IN = 174;
 
 const CMD1  = 194;
@@ -68,10 +72,12 @@ const SEND  = 610;
 const COUNT_START = 636;
 const FRAMES_PER  = 4;
 const COUNT_STEPS = ['003', '018', '041', '067', '089', '104', '121', '138', '147', '152'];
-const COUNT_END   = COUNT_START + COUNT_STEPS.length * FRAMES_PER;
+const COUNT_END   = COUNT_START + COUNT_STEPS.length * FRAMES_PER; // 676
 
-const SUCCESS  = COUNT_END + 24;
-const END_CUR  = SUCCESS + 18;
+const SUCCESS  = COUNT_END + 24;  // 700
+const END_CUR  = SUCCESS + 18;    // 718
+
+// ── Scroll ─────────────────────────────────────────────────────────────────────
 
 function scrollY(frame: number): number {
   const keys: [number, number][] = [
@@ -90,6 +96,8 @@ function scrollY(frame: number): number {
   }
   return keys[keys.length - 1][1];
 }
+
+// ── Badge ──────────────────────────────────────────────────────────────────────
 
 const GreenDot: React.FC<{ frame: number }> = ({ frame }) => {
   const appear = ipl(frame, [D_IN, D_IN + 14], [0, 1]);
@@ -144,6 +152,8 @@ const MembersBadge: React.FC<{ frame: number }> = ({ frame }) => {
   );
 };
 
+// ── Terminal ───────────────────────────────────────────────────────────────────
+
 const MONO = "'SF Mono', 'Menlo', 'Courier New', monospace";
 const SANS = "-apple-system, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif";
 
@@ -185,6 +195,7 @@ const Out: React.FC<{
   );
 };
 
+// Dots type in one by one, then SENT blinks in
 const SentLine: React.FC<{
   frame: number; start: number; label: string; totalDots: number;
 }> = ({ frame, start, label, totalDots }) => {
@@ -218,6 +229,7 @@ const SentLine: React.FC<{
   );
 };
 
+// Counter line — flips through values, then snaps to full success message on one line
 const CounterLine: React.FC<{ frame: number }> = ({ frame }) => {
   if (frame < COUNT_START) return null;
   const elapsed = frame - COUNT_START;
@@ -255,12 +267,6 @@ const TermBody: React.FC<{ frame: number }> = ({ frame }) => {
   const scroll = scrollY(frame);
   const cur    = Math.sin(frame * 0.45) > 0;
 
-  // Clean hard blink: 14 frames on, 14 frames off, then holds solid after CMD4
-  const alertAge  = frame - ALERT;
-  const alertBlink = alertAge < 0 ? 0
-    : frame >= CMD4 ? 1
-    : (Math.floor(alertAge / 14) % 2 === 0 ? 1 : 0.15);
-
   return (
     <div style={{ height: 660, overflow: 'hidden', background: '#181825' }}>
       <div style={{ padding: '26px 30px 32px', transform: `translateY(-${scroll}px)` }}>
@@ -289,7 +295,7 @@ const TermBody: React.FC<{ frame: number }> = ({ frame }) => {
           <div style={{
             color: '#34D399', fontFamily: MONO, fontSize: 17, fontWeight: 700,
             paddingLeft: 34, minHeight: 24, lineHeight: '24px',
-            opacity: ipl(frame, [ALERT, ALERT + 6], [0, 1]) * alertBlink,
+            opacity: ipl(frame, [ALERT, ALERT + 8], [0, 1]) * (Math.floor((frame - ALERT) / 14) % 2 === 0 ? 1 : 0.15),
           }}>
             {'  LOW RISK TRADE DETECTED'}
           </div>
@@ -368,6 +374,8 @@ const TerminalWindow: React.FC<{ frame: number }> = ({ frame }) => {
     </div>
   );
 };
+
+// ── Root ───────────────────────────────────────────────────────────────────────
 
 export const MembersLiveVideo: React.FC = () => {
   const frame = useCurrentFrame();
