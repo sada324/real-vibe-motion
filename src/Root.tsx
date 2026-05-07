@@ -3,10 +3,21 @@ import { Composition } from "remotion";
 import { HelloWorld, myCompSchema } from "./HelloWorld";
 import { Logo, myCompSchema2 } from "./HelloWorld/Logo";
 import { HermesVideo } from "./HermesVideo";
+import { MembersLiveVideo } from "./MembersLiveVideo";
 
 export const RemotionRoot: React.FC = () => {
   return (
     <>
+      {/* ── Members Live: badge → terminal reveal (1080×1920 @ 30fps, ~19s) ── */}
+      <Composition
+        id="MembersLiveVideo"
+        component={MembersLiveVideo}
+        durationInFrames={580}
+        fps={30}
+        width={1080}
+        height={1920}
+      />
+
       {/* ── Hermes: 25s Apple-white swing-trading video (1080×1920 @ 30fps) ── */}
       <Composition
         id="HermesVideo"
