@@ -13,7 +13,6 @@ export const LandingPage: React.FC = () => (
     padding: '52px 24px 80px',
     fontFamily: "'Inter', -apple-system, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif",
   }}>
-    {/* Nav */}
     <header style={{
       width: '100%', maxWidth: 960,
       display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -27,7 +26,6 @@ export const LandingPage: React.FC = () => (
       </span>
     </header>
 
-    {/* Hero */}
     <div style={{ textAlign: 'center', marginBottom: 20, maxWidth: 640 }}>
       <h1 style={{
         fontSize: 'clamp(38px, 6vw, 60px)', fontWeight: 200,
@@ -42,14 +40,12 @@ export const LandingPage: React.FC = () => (
       </p>
     </div>
 
-    {/* Teal hairline */}
     <div style={{
       width: 260, height: 1,
       background: 'linear-gradient(90deg, transparent, #5AC8FA 50%, transparent)',
       opacity: 0.55, marginBottom: 52,
     }} />
 
-    {/* Members Live Video — top */}
     <div style={{
       borderRadius: 28, overflow: 'hidden',
       boxShadow: '0 24px 64px rgba(0,0,0,0.14), 0 0 0 1px rgba(0,0,0,0.06)',
@@ -58,7 +54,7 @@ export const LandingPage: React.FC = () => (
     }}>
       <Player
         component={MembersLiveVideo}
-        durationInFrames={1020}
+        durationInFrames={780}
         fps={30}
         compositionWidth={1080}
         compositionHeight={1920}
@@ -76,7 +72,6 @@ export const LandingPage: React.FC = () => (
       PRESS PLAY TO WATCH ↑
     </p>
 
-    {/* Hermes Video — below */}
     <div style={{ marginTop: 64, textAlign: 'center' }}>
       <p style={{ fontSize: 11, color: '#D1D1D6', letterSpacing: '0.14em', marginBottom: 20 }}>
         MARKET INTELLIGENCE
@@ -102,7 +97,6 @@ export const LandingPage: React.FC = () => (
       </div>
     </div>
 
-    {/* Stats card */}
     <div style={{
       display: 'flex', gap: 0, marginTop: 64,
       background: '#fff',
@@ -136,7 +130,6 @@ export const LandingPage: React.FC = () => (
       ))}
     </div>
 
-    {/* Pills */}
     <div style={{
       display: 'flex', flexWrap: 'wrap', gap: 10,
       marginTop: 40, justifyContent: 'center', maxWidth: 520,
