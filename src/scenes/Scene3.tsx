@@ -43,14 +43,13 @@ function nodeColor(node: Node): string {
 export const Scene3: React.FC = () => {
   const f = useCurrentFrame();
   const { fps } = useVideoConfig();
-
   const opacity = sceneFade(f, 105, 15, 88, 17);
 
-  const VW = 1080, VH = 1000, VY = 180;
+  const VW = 1080, VH = 1000, VY = 170;
   const rotY = remap(f, [0, 105], [-5, 5]);
-  const rotX = 8;
+  const rotX = 7;
 
-  const nodeEntry = (id: number) => springVal(f, id * 3 + 8, fps, 0, 1, SPRING.gentle);
+  const nodeEntry  = (id: number) => springVal(f, id * 3 + 8, fps, 0, 1, SPRING.gentle);
   const flowOffset = (f * 1.6) % 40;
 
   const line1O = remap(f, [30, 52], [0, 1], EASE_OUT);
@@ -60,14 +59,7 @@ export const Scene3: React.FC = () => {
 
   return (
     <AbsoluteFill style={{ background: C.bg, overflow: 'hidden', opacity }}>
-      {/* Very subtle teal glow at center */}
-      <div style={{
-        position: 'absolute', left: 540 - 300, top: 680 - 300,
-        width: 600, height: 600, borderRadius: '50%',
-        background: C.teal, opacity: 0.04, filter: 'blur(160px)',
-      }} />
-
-      {/* Network viz */}
+      {/* Network */}
       <div style={{
         position: 'absolute', left: 0, top: VY, width: VW, height: VH,
         perspective: 1000,
@@ -81,20 +73,19 @@ export const Scene3: React.FC = () => {
           <svg width={VW} height={VH} style={{ display: 'block', overflow: 'visible' }}>
             <defs>
               <filter id="nodeGlow" x="-60%" y="-60%" width="220%" height="220%">
-                <feGaussianBlur stdDeviation="5" result="blur" />
+                <feGaussianBlur stdDeviation="6" result="blur" />
                 <feMerge>
                   <feMergeNode in="blur" />
                   <feMergeNode in="SourceGraphic" />
                 </feMerge>
               </filter>
-              {/* Fine grid */}
               <pattern id="grid3" x="0" y="0" width="72" height="72" patternUnits="userSpaceOnUse">
-                <path d="M72 0 L0 0 0 72" fill="none" stroke="rgba(255,255,255,1)" strokeWidth="0.4" />
+                <path d="M72 0 L0 0 0 72" fill="none" stroke={C.gray500} strokeWidth="0.5" />
               </pattern>
             </defs>
 
-            {/* Perspective grid */}
-            <rect width={VW} height={VH} fill="url(#grid3)" opacity={0.05} />
+            {/* Fine grid */}
+            <rect width={VW} height={VH} fill="url(#grid3)" opacity={0.6} />
 
             {/* Edges */}
             {EDGES.map(([ai, bi], i) => {
@@ -102,15 +93,12 @@ export const Scene3: React.FC = () => {
               const path = edgePath(a, b, VW, VH);
               return (
                 <g key={i}>
+                  <path d={path} fill="none" stroke={C.gray500} strokeWidth={1} opacity={0.7} />
                   <path d={path} fill="none"
-                    stroke="rgba(255,255,255,1)" strokeWidth={0.6}
-                    opacity={0.08}
-                  />
-                  <path d={path} fill="none"
-                    stroke={C.teal} strokeWidth={1.2}
+                    stroke={C.teal} strokeWidth={1.4}
                     strokeDasharray="10 30"
                     strokeDashoffset={-flowOffset + i * 7}
-                    opacity={0.35}
+                    opacity={0.50}
                   />
                 </g>
               );
@@ -121,27 +109,26 @@ export const Scene3: React.FC = () => {
               const nx = node.x * VW;
               const ny = node.y * VH;
               const sp = nodeEntry(node.id);
-              const r = node.r * (0.6 + node.z * 0.4) * sp;
+              const r  = node.r * (0.6 + node.z * 0.4) * sp;
               const col = nodeColor(node);
               const floatY = osc(f, 3, 72, node.id * 0.8);
 
               return (
                 <g key={node.id}
                   transform={`translate(${nx}, ${ny + floatY})`}
-                  opacity={(0.5 + node.z * 0.5) * sp}
+                  opacity={(0.55 + node.z * 0.45) * sp}
                   filter="url(#nodeGlow)"
                 >
                   <circle cx={0} cy={0} r={r * 2.4}
-                    fill="none" stroke={col} strokeWidth={0.5} opacity={0.20} />
+                    fill={col} opacity={0.10} />
                   <circle cx={0} cy={0} r={r}
-                    fill={col} opacity={0.85} />
-
+                    fill={col} opacity={0.90} />
                   {node.label && (
                     <text
                       x={0} y={-r - 12}
                       textAnchor="middle"
-                      fontFamily={FONT} fontSize={16} fontWeight={400}
-                      fill={col} opacity={0.80}
+                      fontFamily={FONT} fontSize={15} fontWeight={600}
+                      fill={col} opacity={0.90}
                       letterSpacing="0.08em"
                     >
                       {node.label}
@@ -158,11 +145,11 @@ export const Scene3: React.FC = () => {
       <AbsoluteFill style={{
         display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'flex-end',
-        padding: '0 96px 200px',
+        padding: '0 96px 210px',
       }}>
         <p style={{
           fontFamily: FONT, fontSize: 56, fontWeight: 200,
-          color: C.white, letterSpacing: '-0.025em', lineHeight: 1.28,
+          color: C.black, letterSpacing: '-0.025em', lineHeight: 1.25,
           margin: 0, textAlign: 'center',
           opacity: line1O, transform: `translateY(${line1Y}px)`,
         }}>
@@ -170,12 +157,12 @@ export const Scene3: React.FC = () => {
         </p>
         <p style={{
           fontFamily: FONT, fontSize: 56, fontWeight: 200,
-          color: C.gray300, letterSpacing: '-0.025em', lineHeight: 1.28,
+          color: C.gray300, letterSpacing: '-0.025em', lineHeight: 1.25,
           margin: 0, textAlign: 'center',
           opacity: line2O, transform: `translateY(${line2Y}px)`,
         }}>
-          the <span style={{ color: C.teal }}>macro</span>…
-          and executing the <span style={{ color: C.green }}>micro</span>.
+          the <span style={{ color: C.teal, fontWeight: 400 }}>macro</span>…
+          and executing the <span style={{ color: C.green, fontWeight: 400 }}>micro</span>.
         </p>
       </AbsoluteFill>
     </AbsoluteFill>
