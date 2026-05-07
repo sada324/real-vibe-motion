@@ -360,7 +360,7 @@ export const MembersLiveVideo: React.FC = () => {
   const globeFrame = frame - GLOBE_START;
   return (
     <AbsoluteFill style={{
-      background: frame >= GLOBE_START ? '#080C14' : '#FFFFFF',
+      background: '#FFFFFF',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
       {frame < CLEAR && <MembersBadge frame={frame} />}
