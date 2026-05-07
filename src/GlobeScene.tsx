@@ -1,257 +1,386 @@
-import React from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import { interpolate, Easing } from 'remotion';
 
 const SPRING = Easing.bezier(0.16, 1, 0.3, 1);
 const EASE   = Easing.bezier(0.4, 0, 0.2, 1);
 
-function ipl(f: number, io: [number, number], ft: [number, number], e = SPRING) {
-  return interpolate(f, io, ft, { extrapolateLeft: 'clamp', extrapolateRight: 'clamp', easing: e });
+function ipl(f: number, io: [number,number], ft: [number,number], e = SPRING) {
+  return interpolate(f, io, ft, { extrapolateLeft:'clamp', extrapolateRight:'clamp', easing: e });
+}
+function typeAt(text: string, frame: number, start: number, speed = 1.8) {
+  return text.slice(0, Math.max(0, Math.floor((frame - start) * speed)));
 }
 
-const SANS = "-apple-system, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif";
+// Deterministic seeded random (no Math.random — must be stable per-frame)
+function sr(seed: number) {
+  const x = Math.sin(seed + 1) * 10000;
+  return x - Math.floor(x);
+}
 
-// ── Cities (positions in 800×400 equirectangular map space) ────────────────────
-// label offsets (lx,ly) are from map-container top-left in rendered pixels
+// ── Data ──────────────────────────────────────────────────────────────────────
 
-const CITIES = [
-  { name: 'Montreal',      full: 'Montreal, CA',      flag: '🇨🇦', col: '#34D399', mx: 237, my:  99, lx: 178, ly:  48 },
-  { name: 'Toronto',       full: 'Toronto, CA',        flag: '🇨🇦', col: '#34D399', mx: 224, my: 103, lx:  35, ly:  75 },
-  { name: 'New York',      full: 'New York, US',       flag: '🇺🇸', col: '#60A5FA', mx: 236, my: 110, lx: 255, ly:  98 },
-  { name: 'Los Angeles',   full: 'Los Angeles, US',    flag: '🇺🇸', col: '#60A5FA', mx: 137, my: 124, lx:   5, ly: 118 },
-  { name: 'London',        full: 'London, UK',         flag: '🇬🇧', col: '#A78BFA', mx: 400, my:  86, lx: 478, ly:  40 },
-  { name: 'Tokyo',         full: 'Tokyo, JP',          flag: '🇯🇵', col: '#F472B6', mx: 710, my: 121, lx: 738, ly:  98 },
+const LOCATIONS = [
+  { id:'mtl', name:'Montreal',    country:'CA', flag:'🇨🇦', color:'#22c55e', temp:12, weather:'☁',  time:'9:41 AM',  lat:45.5, lon:-73.6 },
+  { id:'tor', name:'Toronto',     country:'CA', flag:'🇨🇦', color:'#22c55e', temp:12, weather:'☁',  time:'9:41 AM',  lat:43.7, lon:-79.4 },
+  { id:'nyc', name:'New York',    country:'US', flag:'🇺🇸', color:'#3b82f6', temp:18, weather:'⛅', time:'9:41 AM',  lat:40.7, lon:-74.0 },
+  { id:'lax', name:'Los Angeles', country:'US', flag:'🇺🇸', color:'#ec4899', temp:20, weather:'☀',  time:'6:41 AM',  lat:34.0, lon:-118.2},
+  { id:'lon', name:'London',      country:'UK', flag:'🇬🇧', color:'#3b82f6', temp:12, weather:'☁',  time:'2:41 PM',  lat:51.5, lon:-0.1  },
+  { id:'tok', name:'Tokyo',       country:'JP', flag:'🇯🇵', color:'#ec4899', temp:18, weather:'☀',  time:'10:41 PM', lat:35.7, lon:139.7 },
 ];
 
-// ── Continent polygons (800×400 equirectangular, approximate) ─────────────────
+const CLUSTERS = [
+  {lat:40.7,lon:-74,   s:30},{lat:51.5,lon:-0.1, s:25},{lat:35.7,lon:139.7,s:28},
+  {lat:37.8,lon:144.9, s:18},{lat:1.3, lon:103.8,s:15},{lat:48.9,lon:2.3,  s:20},
+  {lat:52.5,lon:13.4,  s:18},{lat:-33.9,lon:151.2,s:15},{lat:19.4,lon:-99.1,s:22},
+  {lat:55.7,lon:37.6,  s:20},{lat:41.0,lon:28.9, s:18},{lat:23.1,lon:113.3,s:25},
+  {lat:31.2,lon:121.5, s:25},{lat:22.3,lon:114.2,s:22},{lat:34.1,lon:-118.2,s:20},
+  {lat:37.8,lon:-122.4,s:15},{lat:45.5,lon:-73.6,s:18},{lat:43.7,lon:-79.4,s:16},
+  {lat:28.6,lon:77.2,  s:22},{lat:12.9,lon:77.6, s:18},{lat:6.5, lon:3.4,  s:16},
+  {lat:-23.5,lon:-46.6,s:20},{lat:-34.6,lon:-58.4,s:16},{lat:30.0,lon:31.2,s:18},
+  {lat:24.7,lon:46.7,  s:15},{lat:25.2,lon:55.3, s:18},{lat:59.9,lon:10.7,s:12},
+  {lat:57.2,lon:25.2,  s:10},{lat:64.1,lon:-21.9,s:8},
+];
 
-const POLYS: Record<string, string> = {
-  northAmerica:
-    '72,52 95,38 125,30 155,26 178,28 196,38 212,46 232,50 258,52 275,58 282,72 282,90 275,112 280,132 274,155 262,178 248,196 226,215 200,226 172,228 148,218 128,206 105,188 82,165 68,142 58,115 60,85',
-  greenland:
-    '272,22 302,18 328,22 336,36 332,52 320,68 305,80 285,85 272,72',
-  cuba:
-    '195,188 208,185 222,188 228,195 218,200 202,198',
-  southAmerica:
-    '148,220 172,215 195,218 218,228 235,245 245,268 248,295 242,322 228,348 208,368 188,378 168,372 152,352 140,325 135,298 135,270 138,248',
-  europe:
-    '352,48 370,40 392,38 412,42 428,50 438,62 442,78 436,95 428,110 418,122 402,132 382,138 362,130 348,118 344,102 345,82 348,62',
-  scandinavia:
-    '388,28 398,22 412,26 418,38 412,52 400,58 388,50 382,38',
-  uk:
-    '364,55 376,52 380,60 376,74 365,78 358,68',
-  africa:
-    '348,145 375,138 405,140 435,148 458,162 475,185 485,215 488,248 480,282 466,315 445,342 418,360 392,365 368,355 348,332 335,305 330,275 332,245 338,218 342,190 344,165',
-  madagascar:
-    '448,295 458,288 465,298 462,318 452,325 444,315',
-  asia:
-    '440,30 492,22 548,18 602,22 652,28 702,32 742,40 768,55 778,75 775,102 765,125 752,148 735,168 712,182 688,198 658,210 625,218 592,222 562,220 532,212 505,202 480,188 458,172 446,155 442,135 445,112 448,90 444,68',
-  india:
-    '492,150 525,145 552,150 562,168 562,192 552,215 532,230 512,235 496,222 488,200 488,175',
-  sriLanka:
-    '528,240 535,238 538,248 530,252',
-  seAsia:
-    '622,198 652,195 680,202 688,222 680,242 658,255 632,255 618,240 615,218',
-  japan:
-    '702,88 718,85 728,92 726,108 716,118 702,115',
-  korea:
-    '688,100 700,95 706,102 702,114 692,116 685,108',
-  taiwan:
-    '680,155 688,150 694,158 690,168 682,165',
-  australia:
-    '618,268 648,260 682,262 710,272 726,290 730,312 720,335 702,350 672,358 642,352 618,335 610,310 608,285',
-  newZealand:
-    '745,312 755,305 762,315 758,328 748,332 742,322',
-};
+// ── Layout ────────────────────────────────────────────────────────────────────
 
-// ── Timing ─────────────────────────────────────────────────────────────────────
+const CHROME_H = 50;
+const TERM_H   = 148;
+const CANVAS_W = 1080;
+const CANVAS_H = 1920 - CHROME_H - TERM_H;  // 1722
+const CX = CANVAS_W / 2;
+const CY = CANVAS_H / 2;
+const R  = Math.min(CANVAS_W, CANVAS_H) * 0.43; // ≈ 464
 
-const MAP_IN    = 5;
-const HEADER_IN = 18;
-const COUNT_IN  = 32;
-const LOC_START = 52;
-const LOC_GAP   = 24;
+// ── Timing ────────────────────────────────────────────────────────────────────
 
-// Map is 1040×520 in the video (scaled from 800×400 viewBox)
-const MAP_W = 1040;
-const MAP_H = 520;
+const GLOBE_IN   = 5;
+const SIDE_IN    = 14;
+const COUNT_IN   = 22;
+const LOC_START  = 38;
+const LOC_GAP    = 22;
+const FOOTER_IN  = LOC_START + LOCATIONS.length * LOC_GAP + 8;  // 174
+const CMD_START  = FOOTER_IN + 16;   // 190
+const RESULT_IN  = CMD_START + 22;   // 212
+const CUR_IN     = RESULT_IN + 14;   // 226
 
-// ── Scene ──────────────────────────────────────────────────────────────────────
+// ── Globe math ────────────────────────────────────────────────────────────────
+
+function ll2xy(lat: number, lon: number, rotY: number, cx: number, cy: number, r: number) {
+  const phi   = (90 - lat) * Math.PI / 180;
+  const theta = (lon + rotY * 180 / Math.PI) * Math.PI / 180;
+  const x3 = r * Math.sin(phi) * Math.cos(theta);
+  const y3 = r * Math.cos(phi);
+  const z3 = r * Math.sin(phi) * Math.sin(theta);
+  return { x: cx + x3, y: cy - y3, z: z3 };
+}
+
+// ── Canvas draw ───────────────────────────────────────────────────────────────
+
+function drawGlobe(canvas: HTMLCanvasElement, rotY: number, opacity: number) {
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+  ctx.globalAlpha = opacity;
+
+  // Base sphere gradient
+  const g = ctx.createRadialGradient(CX - R*0.2, CY - R*0.2, R*0.08, CX, CY, R*1.1);
+  g.addColorStop(0,   '#1a1a3a');
+  g.addColorStop(0.6, '#0a0a20');
+  g.addColorStop(1,   '#040410');
+  ctx.beginPath(); ctx.arc(CX, CY, R, 0, Math.PI*2); ctx.fillStyle = g; ctx.fill();
+
+  // Clip to sphere
+  ctx.save();
+  ctx.beginPath(); ctx.arc(CX, CY, R, 0, Math.PI*2); ctx.clip();
+
+  // Lat / lon grid
+  ctx.strokeStyle = 'rgba(100,120,200,0.06)'; ctx.lineWidth = 0.7;
+  for (let i = 0; i <= 12; i++) {
+    const lat = -90 + i * 15;
+    ctx.beginPath(); let first = true;
+    for (let lon = -180; lon <= 180; lon += 2) {
+      const p = ll2xy(lat, lon, rotY, CX, CY, R);
+      if (p.z > 0) { first ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y); first = false; }
+      else { first = true; }
+    }
+    ctx.stroke();
+  }
+  for (let lon = -180; lon < 180; lon += 15) {
+    ctx.beginPath(); let first = true;
+    for (let lt = -90; lt <= 90; lt += 2) {
+      const p = ll2xy(lt, lon, rotY, CX, CY, R);
+      if (p.z > 0) { first ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y); first = false; }
+      else { first = true; }
+    }
+    ctx.stroke();
+  }
+
+  // City lights (deterministic seeded positions)
+  CLUSTERS.forEach((c, ci) => {
+    const n = Math.floor(c.s * 1.5);
+    for (let j = 0; j < n; j++) {
+      const dlat = (sr(ci*1000 + j*2)     - 0.5) * 4;
+      const dlon = (sr(ci*1000 + j*2 + 1) - 0.5) * 6;
+      const p = ll2xy(c.lat + dlat, c.lon + dlon, rotY, CX, CY, R);
+      if (p.z > 0) {
+        const bright = 0.4 + sr(ci*1000 + j*2 + 2) * 0.6;
+        const dotR   = sr(ci*1000 + j*2 + 3) * 1.2 + 0.3;
+        ctx.beginPath(); ctx.arc(p.x, p.y, dotR, 0, Math.PI*2);
+        ctx.fillStyle = `rgba(255,218,130,${bright * 0.72})`; ctx.fill();
+      }
+    }
+  });
+
+  ctx.restore();
+
+  // Atmosphere glow
+  const atm = ctx.createRadialGradient(CX, CY, R*0.95, CX, CY, R*1.07);
+  atm.addColorStop(0, 'rgba(60,100,255,0.13)'); atm.addColorStop(1, 'rgba(60,100,255,0)');
+  ctx.beginPath(); ctx.arc(CX, CY, R*1.07, 0, Math.PI*2); ctx.fillStyle = atm; ctx.fill();
+
+  // Specular shimmer
+  const sh = ctx.createRadialGradient(CX - R*0.35, CY - R*0.3, 0, CX - R*0.1, CY - R*0.1, R*0.7);
+  sh.addColorStop(0, 'rgba(120,150,255,0.06)'); sh.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.beginPath(); ctx.arc(CX, CY, R, 0, Math.PI*2); ctx.fillStyle = sh; ctx.fill();
+
+  ctx.globalAlpha = 1;
+}
+
+// ── Collision resolution ──────────────────────────────────────────────────────
+
+function resolveCollisions(pins: Array<{sx:number,sy:number,[k:string]:any}>) {
+  const PIN_W = 170, PIN_H = 50;
+  const rects = pins.map(p => ({...p, dx: 0, dy: 0}));
+  for (let iter = 0; iter < 25; iter++) {
+    for (let i = 0; i < rects.length; i++) {
+      for (let j = i+1; j < rects.length; j++) {
+        const a = rects[i], b = rects[j];
+        const ax = a.sx + a.dx - PIN_W/2, ay = a.sy + a.dy - PIN_H/2;
+        const bx = b.sx + b.dx - PIN_W/2, by = b.sy + b.dy - PIN_H/2;
+        const ox = (ax + PIN_W) - bx, oy = (ay + PIN_H) - by;
+        if (ox > 0 && oy > 0 && bx - ax < PIN_W && by - ay < PIN_H) {
+          if (Math.abs(ox) < Math.abs(oy)) { const push = ox/2+5; a.dx -= push; b.dx += push; }
+          else                              { const push = oy/2+5; a.dy -= push; b.dy += push; }
+        }
+      }
+    }
+  }
+  return rects.map(r => ({...r, fx: r.sx + r.dx, fy: r.sy + r.dy}));
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
+
+const MONO = "'SF Mono','Fira Code',monospace";
 
 export const GlobeScene: React.FC<{ frame: number }> = ({ frame }) => {
-  const mapOp    = ipl(frame, [MAP_IN, MAP_IN + 20], [0, 1]);
-  const mapScale = ipl(frame, [MAP_IN, MAP_IN + 28], [0.96, 1], SPRING);
-  const headerOp = ipl(frame, [HEADER_IN, HEADER_IN + 18], [0, 1]);
-  const countVal = Math.min(Math.round(ipl(frame, [COUNT_IN, COUNT_IN + 22], [0, 152], EASE)), 152);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const rotY       = -0.5 + frame * 0.003;
+  const globeOp    = ipl(frame, [GLOBE_IN, GLOBE_IN + 28], [0, 1]);
+  const sideOp     = ipl(frame, [SIDE_IN, SIDE_IN + 18], [0, 1]);
+  const sideTx     = ipl(frame, [SIDE_IN, SIDE_IN + 22], [-22, 0], SPRING);
+  const countVal   = Math.min(Math.round(ipl(frame, [COUNT_IN, COUNT_IN+22], [0, 152], EASE)), 152);
+  const footerOp   = ipl(frame, [FOOTER_IN, FOOTER_IN+12], [0, 1]);
+  const cmd2Text   = typeAt('globe --live', frame, CMD_START);
+  const resultOp   = ipl(frame, [RESULT_IN, RESULT_IN+10], [0, 1]);
+  const cur        = Math.sin(frame * 0.45) > 0;
+
+  // Draw globe on every frame
+  useEffect(() => {
+    if (canvasRef.current) drawGlobe(canvasRef.current, rotY, globeOp);
+  });
+
+  // City pin positions (pure math, no state)
+  const pins = useMemo(() => {
+    const visible = LOCATIONS
+      .map((loc, i) => {
+        const showAt = LOC_START + i * LOC_GAP;
+        if (frame < showAt) return null;
+        const p = ll2xy(loc.lat, loc.lon, rotY, CX, CY, R);
+        if (p.z < R * 0.15) return null;
+        return { ...loc, sx: p.x, sy: p.y, showAt };
+      })
+      .filter(Boolean) as Array<typeof LOCATIONS[0] & {sx:number,sy:number,showAt:number}>;
+    return resolveCollisions(visible);
+  }, [frame, rotY]);
 
   return (
-    <div style={{
-      width: '100%', height: '100%',
-      background: '#FFFFFF',
-      display: 'flex', flexDirection: 'column',
-      alignItems: 'center',
-      fontFamily: SANS,
-    }}>
+    <div style={{ width:'100%', height:'100%', background:'#0a0a0f', display:'flex', flexDirection:'column', fontFamily: MONO }}>
 
-      {/* ── Header ── */}
+      {/* ── Browser chrome ── */}
       <div style={{
-        opacity: headerOp,
-        display: 'flex', flexDirection: 'column', alignItems: 'center',
-        paddingTop: 110, paddingBottom: 44,
+        height: CHROME_H, background:'#1a1a1f',
+        borderBottom:'1px solid #2a2a35',
+        display:'flex', alignItems:'center', justifyContent:'space-between',
+        padding:'0 20px', flexShrink: 0,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-          <div style={{
-            width: 10, height: 10, borderRadius: '50%', background: '#34D399',
-            boxShadow: '0 0 10px rgba(52,211,153,0.85)',
-          }} />
-          <span style={{
-            fontSize: 13, fontWeight: 600, letterSpacing: '0.16em', color: '#9CA3AF',
-            textTransform: 'uppercase',
-          }}>
-            Live Users
-          </span>
+        <div style={{ display:'flex', gap:7 }}>
+          {['#ff5f57','#febc2e','#28c840'].map((c,i) => (
+            <div key={i} style={{ width:13, height:13, borderRadius:'50%', background:c }} />
+          ))}
         </div>
-        <div style={{
-          fontSize: 100, fontWeight: 700, color: '#111827',
-          letterSpacing: '-5px', lineHeight: 1,
-        }}>
-          {countVal}
+        <div style={{ display:'flex', alignItems:'center', gap:6, background:'#111118', border:'1px solid #2a2a35', borderRadius:7, padding:'5px 14px' }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2">
+            <circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/>
+          </svg>
+          <span style={{ fontSize:12, color:'#888' }}>world.globe</span>
         </div>
-        <div style={{
-          fontSize: 18, fontWeight: 300, color: '#D1D5DB',
-          marginTop: 14, letterSpacing: '0.02em',
-        }}>
-          trading live · worldwide
-        </div>
+        <span style={{ color:'#c084fc', fontSize:16 }}>✦</span>
       </div>
 
-      {/* ── Map container ── */}
-      <div style={{
-        position: 'relative',
-        width: MAP_W, height: MAP_H,
-        opacity: mapOp,
-        transform: `scale(${mapScale})`,
-        transformOrigin: 'center center',
-        flexShrink: 0,
-      }}>
-        <svg
-          width={MAP_W} height={MAP_H}
-          viewBox="0 0 800 400"
-          style={{ display: 'block', borderRadius: 16, overflow: 'hidden' }}
-        >
-          {/* Ocean */}
-          <rect width={800} height={400} fill="#F0F7FF" />
+      {/* ── Content area (globe + sidebar + pins) ── */}
+      <div style={{ flex:1, position:'relative', minHeight:0 }}>
 
-          {/* Subtle lat/lon grid */}
-          <g stroke="#E0EEFF" strokeWidth="0.4" fill="none" opacity="0.8">
-            {[100,200,300,400,500,600,700].map(x => <line key={x} x1={x} y1={0} x2={x} y2={400} />)}
-            {[100,200,300].map(y => <line key={y} x1={0} y1={y} x2={800} y2={y} />)}
-          </g>
+        {/* Globe canvas — fills content area */}
+        <canvas
+          ref={canvasRef}
+          width={CANVAS_W}
+          height={CANVAS_H}
+          style={{ position:'absolute', inset:0, width:'100%', height:'100%', display:'block' }}
+        />
 
-          {/* Continents */}
-          {Object.entries(POLYS).map(([key, pts]) => (
-            <polygon key={key} points={pts}
-              fill="#E2E8F0" stroke="#CBD5E1" strokeWidth="0.7" strokeLinejoin="round" />
-          ))}
+        {/* Sidebar overlaid top-left */}
+        <div style={{
+          position:'absolute', top:24, left:24,
+          width:290, zIndex:10,
+          opacity: sideOp,
+          transform: `translateX(${sideTx}px)`,
+        }}>
+          {/* ~ globe prompt */}
+          <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:14 }}>
+            <div style={{ width:28, height:28, background:'#7c3aed', borderRadius:7, display:'flex', alignItems:'center', justifyContent:'center', fontSize:13 }}>🍎</div>
+            <span style={{ fontSize:14, color:'#7c3aed' }}>~ </span>
+            <span style={{ fontSize:14, color:'#34d399' }}>globe</span>
+          </div>
 
-          {/* City dots */}
-          {CITIES.map((city, i) => {
-            const showAt = LOC_START + i * LOC_GAP;
-            if (frame < showAt) return null;
-            const age = frame - showAt;
-            const sc  = ipl(Math.min(age, 14), [0, 14], [0, 1], SPRING);
-            const pulse = frame >= showAt ? 1 + 0.28 * Math.sin(age * 0.2) : 0;
-            return (
-              <g key={city.name}>
-                {/* outer glow */}
-                <circle cx={city.mx} cy={city.my} r={11 * pulse * sc} fill={city.col} opacity={0.18} />
-                {/* mid ring */}
-                <circle cx={city.mx} cy={city.my} r={6 * sc} fill={city.col} opacity={0.35} />
-                {/* solid dot */}
-                <circle cx={city.mx} cy={city.my} r={3.5 * sc} fill={city.col} />
-              </g>
-            );
-          })}
-        </svg>
+          {/* Card */}
+          <div style={{
+            background:'rgba(15,15,25,0.88)',
+            border:'1px solid rgba(255,255,255,0.08)',
+            borderRadius:12, padding:'14px 16px',
+          }}>
+            <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:12 }}>
+              <div style={{ width:7, height:7, borderRadius:'50%', background:'#22c55e', boxShadow:'0 0 8px #22c55e66' }} />
+              <span style={{ fontSize:10, letterSpacing:'0.12em', color:'#555', textTransform:'uppercase' }}>Live Users</span>
+            </div>
+            <div style={{ fontSize:36, fontWeight:300, color:'#e5e5f0', lineHeight:1, marginBottom:14 }}>
+              {countVal}
+            </div>
+            <div style={{ fontSize:10, letterSpacing:'0.1em', color:'#444', textTransform:'uppercase', marginBottom:8 }}>Locations</div>
 
-        {/* ── Floating city labels (abs positioned over map) ── */}
-        {CITIES.map((city, i) => {
-          const showAt = LOC_START + i * LOC_GAP;
-          if (frame < showAt) return null;
-          const age = frame - showAt;
-          const op = ipl(Math.min(age, 14), [0, 14], [0, 1], SPRING);
-          const sc = ipl(Math.min(age, 14), [0, 14], [0.82, 1], SPRING);
-          return (
-            <div key={city.name} style={{
-              position: 'absolute',
-              left: city.lx,
-              top:  city.ly,
-              opacity: op,
-              transform: `scale(${sc})`,
-              transformOrigin: 'left bottom',
-              pointerEvents: 'none',
-            }}>
-              <div style={{
-                background: '#FFFFFF',
-                borderRadius: 9,
-                padding: '7px 11px',
-                boxShadow: '0 2px 14px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.06)',
-                display: 'flex', alignItems: 'center', gap: 7,
-                whiteSpace: 'nowrap',
-              }}>
-                <div style={{
-                  width: 7, height: 7, borderRadius: '50%',
-                  background: city.col, flexShrink: 0,
-                  boxShadow: `0 0 6px ${city.col}99`,
-                }} />
-                <span style={{
-                  fontSize: 13, fontWeight: 600, color: '#1F2937',
-                  fontFamily: SANS,
+            {LOCATIONS.map((loc, i) => {
+              const showAt = LOC_START + i * LOC_GAP;
+              if (frame < showAt) return null;
+              const rowOp = ipl(frame, [showAt, showAt+10], [0, 1]);
+              return (
+                <div key={loc.id} style={{
+                  display:'flex', alignItems:'center', gap:6,
+                  padding:'4px 0',
+                  borderBottom: i < LOCATIONS.length-1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                  opacity: rowOp,
                 }}>
-                  {city.name}
-                </span>
-                <span style={{ fontSize: 14 }}>{city.flag}</span>
+                  <div style={{ width:7, height:7, borderRadius:'50%', background:loc.color, flexShrink:0 }} />
+                  <span style={{ fontSize:11.5, color:'#b0b0c0', flex:1 }}>{loc.name}, {loc.country}</span>
+                  <span style={{ fontSize:13 }}>{loc.flag}</span>
+                  <span style={{ fontSize:11, color:'#555' }}>{loc.time}</span>
+                  <span style={{ fontSize:11, color:'#888', minWidth:24, textAlign:'right' }}>{loc.temp}°</span>
+                  <span style={{ fontSize:13 }}>{loc.weather}</span>
+                </div>
+              );
+            })}
+
+            {frame >= FOOTER_IN && (
+              <div style={{
+                display:'flex', justifyContent:'space-between',
+                marginTop:10, paddingTop:8,
+                borderTop:'1px solid rgba(255,255,255,0.05)',
+                opacity: footerOp,
+              }}>
+                <span style={{ fontSize:10, color:'#444' }}>6 locations</span>
+                <span style={{ fontSize:10, color:'#444' }}>Updated just now ↻</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* City pins */}
+        {pins.map((pin) => {
+          const age  = frame - pin.showAt;
+          const pinOp = ipl(Math.min(age,14), [0,14], [0,1], SPRING);
+          const ddx  = pin.fx - pin.sx, ddy = pin.fy - pin.sy;
+          const dist = Math.sqrt(ddx*ddx + ddy*ddy);
+
+          return (
+            <div key={pin.id} style={{
+              position:'absolute',
+              left: pin.fx, top: pin.fy,
+              transform:'translate(-50%,-50%)',
+              opacity: pinOp, zIndex:20,
+              pointerEvents:'none',
+            }}>
+              {dist > 10 && (
+                <svg style={{ position:'absolute', overflow:'visible', top:0, left:0, pointerEvents:'none' }} width={1} height={1}>
+                  <line x1={0} y1={0} x2={-ddx} y2={-ddy}
+                    stroke={pin.color} strokeWidth={1} strokeOpacity={0.4} strokeDasharray="4 3" />
+                </svg>
+              )}
+              <div style={{
+                background:'rgba(10,10,20,0.88)',
+                border:'1px solid rgba(255,255,255,0.13)',
+                borderRadius:9, padding:'6px 10px',
+                whiteSpace:'nowrap',
+              }}>
+                <div style={{ display:'flex', alignItems:'center', gap:7 }}>
+                  <div style={{ width:8, height:8, borderRadius:'50%', background:pin.color, flexShrink:0 }} />
+                  <div>
+                    <div style={{ display:'flex', alignItems:'center', gap:5 }}>
+                      <span style={{ fontSize:11, fontWeight:600, color:'#e0e0f0' }}>{pin.name}, {pin.country}</span>
+                      <span style={{ fontSize:11 }}>{pin.flag}</span>
+                    </div>
+                    <div style={{ fontSize:10, color:'#666', display:'flex', gap:5, marginTop:2 }}>
+                      <span>{pin.time}</span>
+                      <span>{pin.weather}</span>
+                      <span>{pin.temp}°</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* ── City chips below the map ── */}
+      {/* ── Terminal section ── */}
       <div style={{
-        display: 'flex', flexWrap: 'wrap', gap: 14,
-        justifyContent: 'center',
-        maxWidth: 1040,
-        padding: '36px 20px 0',
+        height: TERM_H, background:'#0d0d15',
+        borderTop:'1px solid rgba(255,255,255,0.06)',
+        padding:'16px 22px',
+        display:'flex', flexDirection:'column', justifyContent:'center',
+        gap:10, flexShrink:0,
       }}>
-        {CITIES.map((city, i) => {
-          const showAt = LOC_START + i * LOC_GAP + 10;
-          if (frame < showAt) return null;
-          const op = ipl(frame, [showAt, showAt + 12], [0, 1]);
-          const ty = ipl(frame, [showAt, showAt + 16], [14, 0], SPRING);
-          return (
-            <div key={city.full} style={{
-              opacity: op, transform: `translateY(${ty}px)`,
-              background: '#F9FAFB',
-              border: '1px solid #F3F4F6',
-              borderRadius: 50,
-              padding: '12px 22px',
-              display: 'flex', alignItems: 'center', gap: 10,
-              boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
-            }}>
-              <div style={{
-                width: 8, height: 8, borderRadius: '50%',
-                background: city.col,
-                boxShadow: `0 0 7px ${city.col}99`,
-              }} />
-              <span style={{ fontSize: 15, fontWeight: 500, color: '#374151' }}>
-                {city.full}
-              </span>
-              <span style={{ fontSize: 16 }}>{city.flag}</span>
-            </div>
-          );
-        })}
+        {frame >= CMD_START && (
+          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+            <div style={{ width:22, height:22, background:'#7c3aed', borderRadius:5, display:'flex', alignItems:'center', justifyContent:'center', fontSize:10, flexShrink:0 }}>🍎</div>
+            <span style={{ fontSize:12, color:'#7c3aed' }}>~</span>
+            <span style={{ fontSize:12, color:'#34d399' }}>{cmd2Text}</span>
+          </div>
+        )}
+        {frame >= RESULT_IN && (
+          <div style={{ paddingLeft:30, opacity: resultOp, display:'flex', alignItems:'center', gap:8, fontSize:12 }}>
+            <span style={{ color:'#22c55e' }}>✓</span>
+            <span style={{ color:'#22c55e' }}>Live</span>
+            <span style={{ color:'#444' }}>·</span>
+            <span style={{ color:'#888' }}>152 users online</span>
+          </div>
+        )}
+        {frame >= CUR_IN && (
+          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+            <div style={{ width:22, height:22, background:'#7c3aed', borderRadius:5, display:'flex', alignItems:'center', justifyContent:'center', fontSize:10 }}>🍎</div>
+            <span style={{ fontSize:12, color:'#7c3aed' }}>~</span>
+            <div style={{ width:7, height:14, background:'#7c3aed', opacity: cur ? 1 : 0 }} />
+          </div>
+        )}
       </div>
-
     </div>
   );
 };
