@@ -35,7 +35,6 @@ const CandleChart: React.FC<{ w: number; h: number; opacity: number }> = ({ w, h
   const cw = step * 0.52;
   const pad = h * 0.06;
   const ch = h - pad * 2;
-
   return (
     <svg width={w} height={h} style={{ display: 'block', opacity }}>
       {CANDLES.map((c, i) => {
@@ -50,9 +49,9 @@ const CandleChart: React.FC<{ w: number; h: number; opacity: number }> = ({ w, h
         const bodyH = Math.max(Math.abs(cy2 - oy), 2);
         return (
           <g key={i}>
-            <line x1={x} y1={hy} x2={x} y2={ly} stroke={col} strokeWidth={1} opacity={0.4} />
+            <line x1={x} y1={hy} x2={x} y2={ly} stroke={col} strokeWidth={1.2} opacity={0.5} />
             <rect x={x - cw / 2} y={bodyT} width={cw} height={bodyH}
-              fill={col} opacity={isGreen ? 0.70 : 0.60} rx={1} />
+              fill={col} opacity={0.75} rx={1.5} />
           </g>
         );
       })}
@@ -65,29 +64,29 @@ export const Scene1: React.FC = () => {
 
   const opacity  = sceneFade(f, 90, 15, 72, 18);
   const camScale = remap(f, [0, 90], [1.0, 1.06]);
-  const chartOpa = remap(f, [0, 25], [0, 1]) * 0.18;
+  const chartOpa = remap(f, [0, 25], [0, 1]) * 0.13;
 
   const line1Y = remap(f, [18, 42], [32, 0], EASE_OUT);
   const line1O = remap(f, [18, 42], [0, 1],  EASE_OUT);
   const line2Y = remap(f, [32, 56], [32, 0], EASE_OUT);
   const line2O = remap(f, [32, 56], [0, 1],  EASE_OUT);
   const labelO = remap(f, [50, 68], [0, 1],  EASE_OUT);
-  const lineW  = remap(f, [50, 68], [0, 1],  EASE_OUT) * 80;
+  const lineW  = remap(f, [50, 68], [0, 1],  EASE_OUT) * 72;
 
   return (
     <AbsoluteFill style={{ background: C.bg, overflow: 'hidden', opacity }}>
-      {/* Candlestick background — very faint */}
+      {/* Faint candle chart background */}
       <AbsoluteFill style={{
         transform: `scale(${camScale})`,
         transformOrigin: 'center center',
-        filter: 'blur(10px)',
+        filter: 'blur(12px)',
       }}>
         <CandleChart w={1080} h={1920} opacity={chartOpa} />
       </AbsoluteFill>
 
-      {/* Soft vignette to keep focus on text */}
+      {/* White vignette to fade edges */}
       <AbsoluteFill style={{
-        background: `radial-gradient(ellipse 80% 60% at 50% 50%, transparent 0%, ${C.bg} 80%)`,
+        background: `radial-gradient(ellipse 75% 55% at 50% 50%, transparent 0%, ${C.bg} 78%)`,
       }} />
 
       {/* Hero text */}
@@ -98,16 +97,16 @@ export const Scene1: React.FC = () => {
       }}>
         <div style={{ textAlign: 'center' }}>
           <p style={{
-            fontFamily: FONT, fontSize: 80, fontWeight: 200,
-            color: C.white, letterSpacing: '-0.03em', lineHeight: 1.12,
+            fontFamily: FONT, fontSize: 82, fontWeight: 200,
+            color: C.black, letterSpacing: '-0.03em', lineHeight: 1.1,
             margin: 0,
             opacity: line1O, transform: `translateY(${line1Y}px)`,
           }}>
             Most traders stare
           </p>
           <p style={{
-            fontFamily: FONT, fontSize: 80, fontWeight: 200,
-            color: C.gray300, letterSpacing: '-0.03em', lineHeight: 1.12,
+            fontFamily: FONT, fontSize: 82, fontWeight: 200,
+            color: C.gray300, letterSpacing: '-0.03em', lineHeight: 1.1,
             margin: 0,
             opacity: line2O, transform: `translateY(${line2Y}px)`,
           }}>
@@ -119,17 +118,15 @@ export const Scene1: React.FC = () => {
       {/* Bottom wordmark */}
       <AbsoluteFill style={{
         display: 'flex', flexDirection: 'column', alignItems: 'center',
-        justifyContent: 'flex-end', paddingBottom: 108, gap: 14,
+        justifyContent: 'flex-end', paddingBottom: 112, gap: 14,
       }}>
-        {/* Thin divider line */}
         <div style={{
-          width: lineW * 2,
-          height: 1,
-          background: `rgba(255,255,255,0.20)`,
+          width: lineW * 2, height: 1,
+          background: C.gray500,
           opacity: labelO,
         }} />
         <span style={{
-          fontFamily: FONT, fontSize: 20, fontWeight: 300,
+          fontFamily: FONT, fontSize: 18, fontWeight: 400,
           color: C.gray300, letterSpacing: '0.28em',
           opacity: labelO,
         }}>

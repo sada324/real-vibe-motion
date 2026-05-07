@@ -1,7 +1,7 @@
 import React from 'react';
 import { AbsoluteFill, useCurrentFrame, useVideoConfig } from 'remotion';
 import { C, FONT } from '../utils/colors';
-import { remap, osc, EASE_OUT, springVal, SPRING } from '../utils/animations';
+import { remap, EASE_OUT, springVal, SPRING } from '../utils/animations';
 
 export const Scene5: React.FC = () => {
   const f = useCurrentFrame();
@@ -17,43 +17,25 @@ export const Scene5: React.FC = () => {
   const ctx2O  = remap(f, [24, 44], [0, 1], EASE_OUT);
   const ctx2Y  = (1 - ctx2Sp) * 36;
 
-  // Divider grows from center
-  const divW = remap(f, [38, 58], [0, 1], EASE_OUT) * 260;
+  const divW  = remap(f, [38, 58], [0, 1], EASE_OUT) * 240;
 
-  // Logo springs in last
   const logoSp = springVal(f, 48, fps, 0, 1, SPRING.snappy);
   const logoO  = remap(f, [48, 68], [0, 1], EASE_OUT);
   const logoSc = 0.72 + logoSp * 0.28;
+  const tagO   = remap(f, [62, 75], [0, 1], EASE_OUT);
 
-  // Breathing teal glow
-  const pulse    = osc(f, 0.06, 48) + 1.0;
-  const glowOpa  = 0.06 * pulse;
-  const glowSize = 380 + osc(f, 24, 50);
-
-  const tagO = remap(f, [62, 75], [0, 1], EASE_OUT);
-
-  // PnL stats that appear alongside logo
   const statsO = remap(f, [55, 72], [0, 1], EASE_OUT);
   const statsY = remap(f, [55, 72], [16, 0], EASE_OUT);
 
   return (
     <AbsoluteFill style={{ background: C.bg, overflow: 'hidden', opacity }}>
-      {/* Teal glow — centered, breathing */}
+      {/* Very subtle teal tint centered */}
       <div style={{
-        position: 'absolute',
-        left: 540 - glowSize / 2,
-        top:  920 - glowSize / 2,
-        width: glowSize, height: glowSize,
-        borderRadius: '50%',
-        background: C.teal, opacity: glowOpa, filter: 'blur(140px)',
+        position: 'absolute', left: 540 - 300, top: 920 - 300,
+        width: 600, height: 600, borderRadius: '50%',
+        background: C.teal, opacity: 0.04, filter: 'blur(180px)',
       }} />
 
-      {/* Radial vignette */}
-      <AbsoluteFill style={{
-        background: `radial-gradient(ellipse 70% 55% at 50% 50%, transparent 0%, ${C.bg} 82%)`,
-      }} />
-
-      {/* Content */}
       <AbsoluteFill style={{
         display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center',
@@ -61,8 +43,8 @@ export const Scene5: React.FC = () => {
       }}>
         {/* "Trade with context." */}
         <p style={{
-          fontFamily: FONT, fontSize: 74, fontWeight: 200,
-          color: C.white, letterSpacing: '-0.03em', lineHeight: 1.18,
+          fontFamily: FONT, fontSize: 76, fontWeight: 200,
+          color: C.black, letterSpacing: '-0.03em', lineHeight: 1.15,
           margin: 0, textAlign: 'center',
           opacity: ctx1O, transform: `translateY(${ctx1Y}px)`,
         }}>
@@ -71,43 +53,47 @@ export const Scene5: React.FC = () => {
 
         {/* "Not emotion." */}
         <p style={{
-          fontFamily: FONT, fontSize: 74, fontWeight: 200,
-          color: C.gray300, letterSpacing: '-0.03em', lineHeight: 1.18,
+          fontFamily: FONT, fontSize: 76, fontWeight: 200,
+          color: C.gray300, letterSpacing: '-0.03em', lineHeight: 1.15,
           margin: '0 0 52px', textAlign: 'center',
           opacity: ctx2O, transform: `translateY(${ctx2Y}px)`,
         }}>
           Not emotion.
         </p>
 
-        {/* Hairline divider — grows from center */}
+        {/* Hairline divider */}
         <div style={{
           width: divW * 2, height: 1,
-          background: `linear-gradient(to right, transparent, ${C.teal} 30%, rgba(255,255,255,0.5) 50%, ${C.teal} 70%, transparent)`,
-          marginBottom: 48,
+          background: `linear-gradient(to right, transparent, ${C.teal} 30%, ${C.gray500} 50%, ${C.teal} 70%, transparent)`,
+          marginBottom: 52,
         }} />
 
-        {/* PnL stats row */}
+        {/* PnL stats */}
         <div style={{
-          display: 'flex', gap: 52, marginBottom: 52,
+          display: 'flex', gap: 48, marginBottom: 56,
           opacity: statsO, transform: `translateY(${statsY}px)`,
+          background: C.bgSoft,
+          border: `1px solid ${C.panelBorder}`,
+          borderRadius: 18,
+          padding: '24px 40px',
         }}>
           {[
-            { label: 'WIN RATE', value: '74%',    color: C.green },
-            { label: 'AVG R:R',  value: '2.8×',   color: C.teal  },
-            { label: 'MAX DD',   value: '−6.2%',  color: C.red   },
+            { label: 'WIN RATE', value: '74%',   color: C.green },
+            { label: 'AVG R:R',  value: '2.8×',  color: C.teal  },
+            { label: 'MAX DD',   value: '−6.2%', color: C.red   },
           ].map(stat => (
             <div key={stat.label} style={{ textAlign: 'center' }}>
               <div style={{
-                fontFamily: FONT, fontSize: 34, fontWeight: 500,
+                fontFamily: FONT, fontSize: 34, fontWeight: 700,
                 color: stat.color, letterSpacing: '-0.02em',
                 fontVariantNumeric: 'tabular-nums',
               }}>
                 {stat.value}
               </div>
               <div style={{
-                fontFamily: FONT, fontSize: 13, fontWeight: 400,
+                fontFamily: FONT, fontSize: 12, fontWeight: 500,
                 color: C.gray300, letterSpacing: '0.12em',
-                marginTop: 4,
+                marginTop: 5,
               }}>
                 {stat.label}
               </div>
@@ -120,33 +106,31 @@ export const Scene5: React.FC = () => {
           opacity: logoO,
           transform: `scale(${logoSc})`,
           transformOrigin: 'center center',
-          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14,
         }}>
-          {/* Geometric H mark */}
-          <svg width="48" height="40" viewBox="0 0 48 40">
+          {/* Geometric H */}
+          <svg width="46" height="38" viewBox="0 0 46 38">
             <defs>
               <linearGradient id="hGrad" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%"   stopColor={C.teal}  />
-                <stop offset="100%" stopColor={C.white} />
+                <stop offset="0%"   stopColor={C.teal} />
+                <stop offset="100%" stopColor={C.black} />
               </linearGradient>
             </defs>
-            <rect x="0"  y="0"  width="7" height="40" rx="2" fill="url(#hGrad)" />
-            <rect x="20" y="16" width="8" height="8"  rx="1" fill="url(#hGrad)" opacity="0.6" />
-            <rect x="41" y="0"  width="7" height="40" rx="2" fill="url(#hGrad)" />
+            <rect x="0"  y="0" width="7" height="38" rx="2" fill="url(#hGrad)" />
+            <rect x="19" y="15" width="8" height="8" rx="1.5" fill="url(#hGrad)" opacity="0.55" />
+            <rect x="39" y="0" width="7" height="38" rx="2" fill="url(#hGrad)" />
           </svg>
 
-          {/* Wordmark */}
           <p style={{
             fontFamily: FONT, fontSize: 50, fontWeight: 300,
-            color: C.white, letterSpacing: '0.32em',
+            color: C.black, letterSpacing: '0.30em',
             margin: 0, textAlign: 'center',
           }}>
             HERMES
           </p>
 
-          {/* Tagline */}
           <p style={{
-            fontFamily: FONT, fontSize: 20, fontWeight: 300,
+            fontFamily: FONT, fontSize: 18, fontWeight: 400,
             color: C.gray300, letterSpacing: '0.18em',
             margin: 0, textAlign: 'center',
             opacity: tagO,
