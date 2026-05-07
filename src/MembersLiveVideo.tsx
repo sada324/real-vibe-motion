@@ -5,6 +5,7 @@ import {
   useCurrentFrame,
   Easing,
 } from 'remotion';
+import { LifestyleScene } from './LifestyleVideo';
 
 const SPRING = Easing.bezier(0.16, 1, 0.3, 1);
 const EASE   = Easing.bezier(0.4, 0, 0.2, 1);
@@ -364,15 +365,19 @@ const TerminalWindow: React.FC<{ frame: number }> = ({ frame }) => {
   );
 };
 
+const LIFESTYLE_START = 780;
+
 export const MembersLiveVideo: React.FC = () => {
   const frame = useCurrentFrame();
+  const lifestyleFrame = frame - LIFESTYLE_START;
   return (
     <AbsoluteFill style={{
       background: '#FFFFFF',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
-      {frame < CLEAR && <MembersBadge frame={frame} />}
-      {frame >= TERM_IN && <TerminalWindow frame={frame} />}
+      {frame < LIFESTYLE_START && frame < CLEAR && <MembersBadge frame={frame} />}
+      {frame >= TERM_IN && frame < LIFESTYLE_START && <TerminalWindow frame={frame} />}
+      {frame >= LIFESTYLE_START && <LifestyleScene frame={lifestyleFrame} />}
     </AbsoluteFill>
   );
 };
