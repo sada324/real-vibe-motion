@@ -57,7 +57,7 @@ export const LandingPage: React.FC = () => (
     }}>
       <Player
         component={HermesVideo}
-        durationInFrames={450}
+        durationInFrames={600}
         fps={30}
         compositionWidth={1080}
         compositionHeight={1920}

@@ -40,22 +40,28 @@ function nodeColor(node: Node): string {
   return C.teal;
 }
 
+// Scene 3 — 120 frames = 4s
 export const Scene3: React.FC = () => {
   const f = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const opacity = sceneFade(f, 105, 15, 88, 17);
+  const opacity = sceneFade(f, 120, 15, 102, 18);
 
-  const VW = 1080, VH = 1000, VY = 170;
-  const rotY = remap(f, [0, 105], [-5, 5]);
+  const VW = 1080, VH = 1000, VY = 168;
+  // Wider rotation sweep over the extra time
+  const rotY = remap(f, [0, 120], [-7, 7]);
   const rotX = 7;
 
   const nodeEntry  = (id: number) => springVal(f, id * 3 + 8, fps, 0, 1, SPRING.gentle);
-  const flowOffset = (f * 1.6) % 40;
+  const flowOffset = (f * 1.5) % 40;
 
   const line1O = remap(f, [30, 52], [0, 1], EASE_OUT);
   const line1Y = remap(f, [30, 52], [24, 0], EASE_OUT);
   const line2O = remap(f, [44, 66], [0, 1], EASE_OUT);
   const line2Y = remap(f, [44, 66], [24, 0], EASE_OUT);
+
+  // Legend that appears later
+  const legendO = remap(f, [70, 88], [0, 1], EASE_OUT);
+  const legendY = remap(f, [70, 88], [12, 0], EASE_OUT);
 
   return (
     <AbsoluteFill style={{ background: C.bg, overflow: 'hidden', opacity }}>
@@ -84,10 +90,8 @@ export const Scene3: React.FC = () => {
               </pattern>
             </defs>
 
-            {/* Fine grid */}
             <rect width={VW} height={VH} fill="url(#grid3)" opacity={0.6} />
 
-            {/* Edges */}
             {EDGES.map(([ai, bi], i) => {
               const a = NODES[ai], b = NODES[bi];
               const path = edgePath(a, b, VW, VH);
@@ -104,7 +108,6 @@ export const Scene3: React.FC = () => {
               );
             })}
 
-            {/* Nodes */}
             {NODES.map((node) => {
               const nx = node.x * VW;
               const ny = node.y * VH;
@@ -119,10 +122,8 @@ export const Scene3: React.FC = () => {
                   opacity={(0.55 + node.z * 0.45) * sp}
                   filter="url(#nodeGlow)"
                 >
-                  <circle cx={0} cy={0} r={r * 2.4}
-                    fill={col} opacity={0.10} />
-                  <circle cx={0} cy={0} r={r}
-                    fill={col} opacity={0.90} />
+                  <circle cx={0} cy={0} r={r * 2.4} fill={col} opacity={0.10} />
+                  <circle cx={0} cy={0} r={r} fill={col} opacity={0.90} />
                   {node.label && (
                     <text
                       x={0} y={-r - 12}
@@ -139,6 +140,29 @@ export const Scene3: React.FC = () => {
             })}
           </svg>
         </div>
+      </div>
+
+      {/* Legend pills */}
+      <div style={{
+        position: 'absolute', top: VY + VH - 20, left: 0, right: 0,
+        display: 'flex', justifyContent: 'center', gap: 18,
+        opacity: legendO, transform: `translateY(${legendY}px)`,
+      }}>
+        {[
+          { col: C.green, label: 'Buy Flow' },
+          { col: C.red,   label: 'Sell Pressure' },
+          { col: C.teal,  label: 'Liquidity' },
+        ].map(item => (
+          <div key={item.label} style={{
+            display: 'flex', alignItems: 'center', gap: 7,
+          }}>
+            <div style={{ width: 9, height: 9, borderRadius: '50%', background: item.col }} />
+            <span style={{
+              fontFamily: FONT, fontSize: 14, fontWeight: 500,
+              color: C.gray300, letterSpacing: '0.06em',
+            }}>{item.label}</span>
+          </div>
+        ))}
       </div>
 
       {/* Bottom text */}
