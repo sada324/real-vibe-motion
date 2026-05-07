@@ -1,7 +1,7 @@
 import React from 'react';
 import { AbsoluteFill, useCurrentFrame } from 'remotion';
 import { C, FONT } from '../utils/colors';
-import { sceneFade, EASE_OUT, remap, osc } from '../utils/animations';
+import { sceneFade, EASE_OUT, remap } from '../utils/animations';
 
 const CANDLES = (() => {
   const out: { o: number; c: number; h: number; l: number }[] = [];
@@ -84,8 +84,6 @@ export const Scene1: React.FC = () => {
         {/* Animated ticker cards */}
         <div style={{ display: 'flex', gap: 16, opacity: tickerO, transform: `translateY(${tickerY}px)` }}>
           {TICKERS.map((t, i) => {
-            const es = 1 + osc(f, 0.13, 22, i * 1.8);
-            const er = osc(f, 10, 70, i * 2.1);
             return (
               <div key={t.sym} style={{
                 background: C.bgSoft, border: `1px solid ${C.panelBorder}`,
@@ -93,11 +91,7 @@ export const Scene1: React.FC = () => {
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
                 boxShadow: C.shadow, minWidth: 148,
               }}>
-                <span style={{
-                  fontSize: 28, display: 'inline-block',
-                  transform: `scale(${es}) rotate(${er}deg)`,
-                  transformOrigin: '50% 50%',
-                }}>{t.emoji}</span>
+                <span style={{ fontSize: 28 }}>{t.emoji}</span>
                 <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: C.gray300, letterSpacing: '0.10em' }}>{t.sym}</span>
                 <span style={{ fontFamily: FONT, fontSize: 24, fontWeight: 700, color: C.black, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums' }}>{t.val}</span>
                 <span style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600, color: t.up ? C.green : C.red }}>{t.chg}</span>

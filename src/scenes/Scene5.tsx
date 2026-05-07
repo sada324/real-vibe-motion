@@ -1,7 +1,7 @@
 import React from 'react';
 import { AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig } from 'remotion';
 import { C, FONT } from '../utils/colors';
-import { sceneFade, remap, osc, EASE_OUT, springVal, SPRING } from '../utils/animations';
+import { sceneFade, remap, EASE_OUT, springVal, SPRING } from '../utils/animations';
 
 function countUp(frame: number, start: number, end: number, target: number): number {
   const p = interpolate(frame, [start, end], [0, 1], { extrapolateLeft:'clamp', extrapolateRight:'clamp', easing: EASE_OUT });
@@ -19,7 +19,6 @@ const TRADE_CARDS: TradeCard[] = [
 const TradeResultCard: React.FC<{ card: TradeCard; frame: number; fps: number }> = ({ card, frame, fps }) => {
   const sp = springVal(frame, card.startFrame, fps, 0, 1, SPRING.cinematic);
   const alpha = interpolate(frame, [card.startFrame, card.startFrame + 18], [0, 1], { extrapolateLeft:'clamp', extrapolateRight:'clamp' });
-  const es = 1 + osc(frame, 0.09, 30, card.startFrame * 0.3);
   const isLong = card.type === 'LONG';
   return (
     <div style={{
@@ -31,7 +30,7 @@ const TradeResultCard: React.FC<{ card: TradeCard; frame: number; fps: number }>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-            <span style={{ fontSize: 16, display: 'inline-block', transform: `scale(${es})` }}>{card.flag}</span>
+            <span style={{ fontSize: 16 }}>{card.flag}</span>
             <span style={{ fontFamily: FONT, fontSize: 13, fontWeight: 600, color: C.gray300, letterSpacing: '0.04em' }}>{card.handle}</span>
           </div>
           <span style={{ fontFamily: FONT, fontSize: 17, fontWeight: 700, color: C.black, letterSpacing: '-0.01em' }}>{card.asset}</span>
@@ -70,10 +69,6 @@ export const Scene5: React.FC = () => {
   const statsO  = remap(f, [55, 75], [0, 1], EASE_OUT);
   const statsY  = remap(f, [55, 75], [14, 0], EASE_OUT);
 
-  // Animated fire emoji next to counter
-  const fireS = 1 + osc(f, 0.14, 18, 0);
-  const fireR = osc(f, 8, 25, 0.5);
-
   const STATS = [
     { value: '89%',   label: 'Profitable\nMonth 1', emoji: '🏆' },
     { value: '$2.8k', label: 'Avg First\nTrade PnL', emoji: '💵' },
@@ -93,7 +88,7 @@ export const Scene5: React.FC = () => {
             <span style={{
               fontFamily: FONT, fontSize: 60, fontWeight: 300, color: C.green, letterSpacing: '-0.03em',
             }}>+</span>
-            <span style={{ fontSize: 38, display: 'inline-block', transform: `scale(${fireS}) rotate(${fireR}deg)`, transformOrigin: '50% 50%' }}>🔥</span>
+            <span style={{ fontSize: 38 }}>🔥</span>
           </div>
         </div>
 
@@ -112,10 +107,9 @@ export const Scene5: React.FC = () => {
         {/* Stats row */}
         <div style={{ display: 'flex', width: '100%', marginTop: 20, background: C.bgCard, borderRadius: 18, boxShadow: C.shadow, overflow: 'hidden', opacity: statsO, transform: `translateY(${statsY}px)` }}>
           {STATS.map((stat, i) => {
-            const es2 = 1 + osc(f, 0.10, 24, i * 1.4);
             return (
               <div key={stat.label} style={{ flex: 1, textAlign: 'center', padding: '18px 12px', borderRight: i < STATS.length - 1 ? `1px solid ${C.panelBorder}` : 'none' }}>
-                <span style={{ fontSize: 24, display: 'inline-block', transform: `scale(${es2})`, marginBottom: 6 }}>{stat.emoji}</span>
+                <span style={{ fontSize: 24, marginBottom: 6, display: 'block' }}>{stat.emoji}</span>
                 <div style={{ fontFamily: FONT, fontSize: 30, fontWeight: 800, color: C.accent, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums' }}>{stat.value}</div>
                 <div style={{ fontFamily: FONT, fontSize: 11, fontWeight: 600, color: C.gray300, letterSpacing: '0.08em', marginTop: 4, whiteSpace: 'pre-line', lineHeight: 1.4 }}>{stat.label}</div>
               </div>

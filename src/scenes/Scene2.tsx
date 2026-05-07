@@ -3,6 +3,7 @@ import { AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig } from 'remo
 import { C, FONT } from '../utils/colors';
 import { sceneFade, EASE_OUT, remap, osc, springVal, SPRING } from '../utils/animations';
 
+
 interface PanelRow { label: string; value: string; color?: string; sub?: string }
 interface PanelProps {
   title: string; emoji: string;
@@ -18,10 +19,6 @@ const DataPanel: React.FC<PanelProps> = ({
   const sp     = springVal(frame, startFrame, fps, 0, 1, SPRING.cinematic);
   const floatY = osc(frame, 3.5, 110, floatPhase);
   const alpha  = interpolate(frame, [startFrame, startFrame + 22], [0, 1], { extrapolateLeft:'clamp', extrapolateRight:'clamp' });
-  // Animated emoji
-  const es = 1 + osc(frame, 0.10, 26, floatPhase);
-  const er = osc(frame, 8, 88, floatPhase + 0.5);
-
   return (
     <div style={{
       position: 'absolute', left: x, top: y + (1 - sp) * 44 + floatY,
@@ -32,11 +29,7 @@ const DataPanel: React.FC<PanelProps> = ({
         display: 'flex', alignItems: 'center', gap: 10,
         marginBottom: 16, paddingBottom: 12, borderBottom: `1px solid ${C.panelBorder}`,
       }}>
-        <span style={{
-          fontSize: 22, display: 'inline-block',
-          transform: `scale(${es}) rotate(${er}deg)`,
-          transformOrigin: '50% 50%',
-        }}>{emoji}</span>
+        <span style={{ fontSize: 22 }}>{emoji}</span>
         <span style={{ fontFamily: FONT, fontSize: 11, fontWeight: 700, color: C.gray300, letterSpacing: '0.16em', textTransform: 'uppercase' }}>{title}</span>
       </div>
       {rows.map((row, i) => (
