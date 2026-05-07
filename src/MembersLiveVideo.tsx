@@ -4,6 +4,8 @@ import {
   interpolate,
   useCurrentFrame,
   Easing,
+  Img,
+  staticFile,
 } from 'remotion';
 import { LifestyleScene } from './LifestyleVideo';
 
@@ -367,6 +369,33 @@ const TerminalWindow: React.FC<{ frame: number }> = ({ frame }) => {
 
 const LIFESTYLE_START = 780;
 
+// Discord notification banner timing
+const NOTIF_IN   = 542;  // slides down shortly after Discord SENT
+const NOTIF_OUT  = NOTIF_IN + 18 + 46 + 1; // in(18) + hold(46) + start exit
+const NOTIF_GONE = NOTIF_OUT + 18;
+
+const DiscordNotif: React.FC<{ frame: number }> = ({ frame }) => {
+  if (frame < NOTIF_IN || frame > NOTIF_GONE) return null;
+  const SPRING_IN = Easing.bezier(0.16, 1, 0.3, 1);
+  const y = frame < NOTIF_OUT
+    ? interpolate(frame, [NOTIF_IN, NOTIF_IN + 18], [-320, 60], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp', easing: SPRING_IN })
+    : interpolate(frame, [NOTIF_OUT, NOTIF_GONE], [60, -320], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp', easing: Easing.bezier(0.4, 0, 1, 1) });
+  return (
+    <div style={{
+      position: 'absolute',
+      top: 0, left: '50%',
+      transform: `translateX(-50%) translateY(${y}px)`,
+      width: 900,
+      zIndex: 100,
+    }}>
+      <Img
+        src={staticFile('discord-notification.png')}
+        style={{ width: '100%', display: 'block', borderRadius: 18 }}
+      />
+    </div>
+  );
+};
+
 export const MembersLiveVideo: React.FC = () => {
   const frame = useCurrentFrame();
   const lifestyleFrame = frame - LIFESTYLE_START;
@@ -378,6 +407,7 @@ export const MembersLiveVideo: React.FC = () => {
       {frame < LIFESTYLE_START && frame < CLEAR && <MembersBadge frame={frame} />}
       {frame >= TERM_IN && frame < LIFESTYLE_START && <TerminalWindow frame={frame} />}
       {frame >= LIFESTYLE_START && <LifestyleScene frame={lifestyleFrame} />}
+      <DiscordNotif frame={frame} />
     </AbsoluteFill>
   );
 };
