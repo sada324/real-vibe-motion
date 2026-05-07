@@ -46,10 +46,10 @@ const CLEAR    = 160;
 const TERM_IN = 174;
 
 const CMD1  = 194;
-const OUT1A = 224;   // Market volatility spike detected.
-const OUT1B = 240;   // BTC -4.2% past hour
-const OUT1C = 258;   // ETH -6.1% past hour
-const OUT1D = 276;   // Long liquidations increasing
+const OUT1A = 224;
+const OUT1B = 240;
+const OUT1C = 258;
+const OUT1D = 276;
 
 const CMD2  = 304;
 const OUT2A = 328;
@@ -63,14 +63,11 @@ const ALERT = 438;
 const CONF  = 460;
 
 const CMD4  = 488;
-// Discord........ (8 dots @ 0.5/frame = 16f) → SENT blinks at +18
 const DISC  = 514;
-// Instagram...... (6 dots = 12f) → SENT at +14 — starts after Discord SENT settles
 const INSTA = 544;
-// Push............ (12 dots = 24f) → SENT at +26
 const PUSH  = 572;
 
-const SEND  = 610;   // sending_to_members...
+const SEND  = 610;
 
 const COUNT_START = 636;
 const FRAMES_PER  = 4;
@@ -204,14 +201,13 @@ const SentLine: React.FC<{
 }> = ({ frame, start, label, totalDots }) => {
   if (frame < start) return null;
 
-  const DOTS_SPEED = 0.5; // dots per frame
+  const DOTS_SPEED = 0.5;
   const dotsShown  = Math.min(Math.floor((frame - start) * DOTS_SPEED), totalDots);
   const allDoneAt  = start + Math.ceil(totalDots / DOTS_SPEED);
   const sentStart  = allDoneAt + 2;
   const sentVisible = frame >= sentStart;
   const blinkAge   = frame - sentStart;
 
-  // 3 quick blinks then solid
   const sentOp = sentVisible
     ? (blinkAge < 14 ? (Math.floor(blinkAge / 2) % 2 === 0 ? 1 : 0) : 1)
     : 0;
@@ -233,24 +229,36 @@ const SentLine: React.FC<{
   );
 };
 
-// Counter line — single line that flips through values
+// Counter line — flips through values, then snaps to full success message on one line
 const CounterLine: React.FC<{ frame: number }> = ({ frame }) => {
   if (frame < COUNT_START) return null;
-  const elapsed  = frame - COUNT_START;
-  const stepIdx  = Math.min(Math.floor(elapsed / FRAMES_PER), COUNT_STEPS.length - 1);
-  const isLast   = stepIdx === COUNT_STEPS.length - 1;
-  const value    = COUNT_STEPS[stepIdx];
-  const glow     = isLast
+  const elapsed = frame - COUNT_START;
+  const stepIdx = Math.min(Math.floor(elapsed / FRAMES_PER), COUNT_STEPS.length - 1);
+  const isLast  = stepIdx === COUNT_STEPS.length - 1;
+  const value   = COUNT_STEPS[stepIdx];
+  const showSuccess = frame >= SUCCESS;
+  const successOp   = ipl(frame, [SUCCESS, SUCCESS + 10], [0, 1]);
+  const glow = isLast
     ? `rgba(52,211,153,${0.55 + 0.3 * Math.sin((frame - COUNT_END) * 0.22)})`
     : 'transparent';
   return (
-    <div style={{ paddingLeft: 34, minHeight: 24, lineHeight: '24px' }}>
-      <span style={{
-        fontFamily: MONO, fontSize: 17, fontWeight: 700, color: '#34D399',
-        textShadow: isLast ? `0 0 16px ${glow}` : 'none',
-      }}>
-        {value}
-      </span>
+    <div style={{ paddingLeft: 34, minHeight: 24, lineHeight: '24px', display: 'flex', alignItems: 'center' }}>
+      {!showSuccess && (
+        <span style={{
+          fontFamily: MONO, fontSize: 17, fontWeight: 700, color: '#34D399',
+          textShadow: isLast ? `0 0 16px ${glow}` : 'none',
+        }}>
+          {value}
+        </span>
+      )}
+      {showSuccess && (
+        <span style={{
+          fontFamily: MONO, fontSize: 17, fontWeight: 700, color: '#34D399',
+          opacity: successOp,
+        }}>
+          152 members notified successfully
+        </span>
+      )}
     </div>
   );
 };
@@ -283,8 +291,24 @@ const TermBody: React.FC<{ frame: number }> = ({ frame }) => {
 
         {frame >= ALERT - 6 && <div style={{ height: 16 }} />}
 
-        <Out frame={frame} start={ALERT} text="  LOW RISK TRADE DETECTED" color="#34D399" bold />
-        <Out frame={frame} start={CONF}  text="  Confidence score: 87%" color="#34D399" />
+        {frame >= ALERT && (
+          <div style={{
+            color: '#34D399', fontFamily: MONO, fontSize: 17, fontWeight: 700,
+            paddingLeft: 34, minHeight: 24, lineHeight: '24px',
+            opacity: ipl(frame, [ALERT, ALERT + 8], [0, 1]) * (0.55 + 0.45 * Math.sin((frame - ALERT) * 0.08)),
+          }}>
+            {'  LOW RISK TRADE DETECTED'}
+          </div>
+        )}
+        {frame >= CONF && (
+          <div style={{
+            color: '#34D399', fontFamily: MONO, fontSize: 17,
+            paddingLeft: 34, minHeight: 24, lineHeight: '24px',
+            opacity: ipl(frame, [CONF, CONF + 8], [0, 1]),
+          }}>
+            {'  Confidence score: '}{Math.min(Math.round(ipl(frame, [CONF, CONF + 30], [0, 87])), 87)}{'%'}
+          </div>
+        )}
 
         {frame >= CMD4 - 6 && <div style={{ height: 16 }} />}
 
@@ -298,8 +322,6 @@ const TermBody: React.FC<{ frame: number }> = ({ frame }) => {
 
         {frame >= COUNT_START - 2 && <div style={{ height: 10 }} />}
         <CounterLine frame={frame} />
-
-        <Out frame={frame} start={SUCCESS} text="  152 members notified successfully" color="#34D399" />
 
         {frame >= END_CUR && (
           <div style={{ display: 'flex', alignItems: 'center', marginTop: 6 }}>
