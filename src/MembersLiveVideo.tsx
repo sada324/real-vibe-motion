@@ -90,11 +90,10 @@ const GreenDot: React.FC<{ frame: number }> = ({ frame }) => {
 };
 
 const MembersBadge: React.FC<{ frame: number }> = ({ frame }) => {
-  const slideIn  = ipl(frame, [B_IN, B_IN + 28], [0, 1]);
-  const yIn      = ipl(frame, [B_IN, B_IN + 28], [40, 0]);
-  const fadeOut  = ipl(frame, [HOLD_END, CLEAR], [1, 0]);
-  const textReveal = ipl(frame, [T_IN, T_IN + 22], [0, 1]);
-  const textX      = ipl(frame, [T_IN, T_IN + 22], [12, 0]);
+  const slideIn = ipl(frame, [B_IN, B_IN + 28], [0, 1]);
+  const yIn     = ipl(frame, [B_IN, B_IN + 28], [40, 0]);
+  const fadeOut = ipl(frame, [HOLD_END, CLEAR], [1, 0]);
+  const textSnap = frame >= T_IN ? 1 : 0;
 
   return (
     <div style={{
@@ -107,22 +106,20 @@ const MembersBadge: React.FC<{ frame: number }> = ({ frame }) => {
       <div style={{
         background: '#1C1C1E',
         borderRadius: 60,
-        padding: '20px 36px',
+        padding: '14px 28px',
         display: 'flex',
         alignItems: 'center',
-        gap: 16,
+        gap: 12,
         boxShadow: '0 12px 48px rgba(0,0,0,0.18), 0 0 0 1px rgba(255,255,255,0.06)',
       }}>
         <GreenDot frame={frame} />
         <span style={{
           color: '#FFFFFF',
-          fontSize: 36,
-          fontFamily: "'Inter', -apple-system, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif",
-          fontWeight: 500,
-          letterSpacing: '-0.4px',
-          opacity: textReveal,
-          transform: `translateX(${textX}px)`,
-          display: 'inline-block',
+          fontSize: 22,
+          fontFamily: "-apple-system, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif",
+          fontWeight: 300,
+          letterSpacing: '-0.2px',
+          opacity: textSnap,
           lineHeight: 1,
         }}>
           152 members active
@@ -250,7 +247,7 @@ const TerminalWindow: React.FC<{ frame: number }> = ({ frame }) => {
           color: '#555',
           pointerEvents: 'none',
         }}>
-          live-proof — zsh
+          taught-by-sosa — zsh
         </div>
         {/* Sparkle */}
         <div style={{ marginLeft: 'auto', zIndex: 1, fontSize: 18, color: '#C084FC' }}>✦</div>
@@ -297,7 +294,40 @@ export const MembersLiveVideo: React.FC = () => {
       {frame < CLEAR && <MembersBadge frame={frame} />}
 
       {/* Phase 2: terminal */}
-      {frame >= TERM_IN && <TerminalWindow frame={frame} />}
+      {frame >= TERM_IN && (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 36 }}>
+          {/* Branding */}
+          <div style={{
+            opacity: ipl(frame, [TERM_IN, TERM_IN + 20], [0, 1]),
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 6,
+          }}>
+            <span style={{
+              fontFamily: "-apple-system, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif",
+              fontSize: 13,
+              fontWeight: 400,
+              letterSpacing: '0.18em',
+              color: '#AEAEB2',
+              textTransform: 'uppercase',
+            }}>
+              Taught by
+            </span>
+            <span style={{
+              fontFamily: "-apple-system, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif",
+              fontSize: 38,
+              fontWeight: 700,
+              letterSpacing: '-0.03em',
+              color: '#1D1D1F',
+              lineHeight: 1,
+            }}>
+              Sosa
+            </span>
+          </div>
+          <TerminalWindow frame={frame} />
+        </div>
+      )}
     </AbsoluteFill>
   );
 };
