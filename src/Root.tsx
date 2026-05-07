@@ -7,11 +7,11 @@ import { HermesVideo } from "./HermesVideo";
 export const RemotionRoot: React.FC = () => {
   return (
     <>
-      {/* ── Hermes: 20s Apple-style swing-trading video (1080×1920 @ 30fps) ── */}
+      {/* ── Hermes: 25s Apple-white swing-trading video (1080×1920 @ 30fps) ── */}
       <Composition
         id="HermesVideo"
         component={HermesVideo}
-        durationInFrames={600}
+        durationInFrames={750}
         fps={30}
         width={1080}
         height={1920}
