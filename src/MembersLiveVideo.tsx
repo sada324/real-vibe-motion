@@ -9,6 +9,7 @@ import {
 // ── helpers ────────────────────────────────────────────────────────────────────
 
 const SPRING = Easing.bezier(0.16, 1, 0.3, 1);
+const EASE   = Easing.bezier(0.4, 0, 0.2, 1);
 
 function ipl(
   frame: number,
@@ -23,75 +24,106 @@ function ipl(
   });
 }
 
-function typeAt(text: string, frame: number, start: number, speed = 1.6): string {
-  const chars = Math.max(0, Math.floor((frame - start) * speed));
-  return text.slice(0, chars);
+function typeAt(text: string, frame: number, start: number, speed = 1.8): string {
+  return text.slice(0, Math.max(0, Math.floor((frame - start) * speed)));
 }
 
-function isDone(text: string, frame: number, start: number, speed = 1.6): boolean {
+function isDone(text: string, frame: number, start: number, speed = 1.8): boolean {
   return Math.floor((frame - start) * speed) >= text.length;
 }
 
 // ── Timing (30 fps) ────────────────────────────────────────────────────────────
-// Phase 1: badge reveal 0-220
-const B_IN   = 18;   // badge pill slides in
-const D_IN   = 52;   // green dot fades in
-const T_IN   = 82;   // "152 members active" text reveals
-const HOLD_END = 195; // begin clear
-const CLEAR   = 230; // fully blank
 
-// Phase 2: terminal 240-580
-const TERM_IN = 240;
+const B_IN     = 18;
+const D_IN     = 50;
+const T_IN     = 80;
+const HOLD_END = 195;
+const CLEAR    = 228;
 
-// typing start frames
-const CMD1  = 275;   // "active_members --live"
-const OUT1  = 310;   // "152 traders. Live."
-const CMD2  = 358;   // "what_are_they_doing"
-const OUT2A = 395;   // "Running setups we built with them."
-const OUT2B = 425;   // "Real entries. Real exits. In live markets."
-const CMD3  = 478;   // "proof"
-const OUT3  = 510;   // "You're looking at it."
-const BLINK  = 540;  // idle cursor after last line
+const TERM_IN  = 240;
+
+const CMD1  = 272;
+const OUT1A = 302;   // Market volatility spike detected.
+const OUT1B = 318;   // BTC -4.2% past hour
+const OUT1C = 334;   // ETH -6.1% past hour
+const OUT1D = 350;   // Long liquidations increasing
+
+const CMD2  = 390;
+const OUT2A = 422;   // Liquidity zones mapped
+const OUT2B = 440;   // Funding imbalance detected
+const OUT2C = 458;   // Short-term reversal probability increasing
+
+const CMD3  = 502;
+const OUT3A = 534;   // Risk exposure minimized
+const OUT3B = 552;   // Entry optimized
+const OUT3C = 568;   // Profit targets configured
+
+const ALERT = 605;   // LOW RISK TRADE DETECTED
+const CONF  = 648;   // Confidence score: 87%
+
+const CMD4  = 680;
+const DISC  = 712;   // Discord........ SENT
+const INSTA = 738;   // Instagram...... SENT
+const PUSH  = 764;   // Push............ SENT
+const SEND  = 790;   // sending_to_members...
+
+const COUNT_START = 830;
+const FRAMES_PER_STEP = 5;
+const COUNT_STEPS = ['003', '018', '041', '067', '089', '104', '121', '138', '147', '152'];
+const COUNT_END   = COUNT_START + COUNT_STEPS.length * FRAMES_PER_STEP; // 880
+const SUCCESS     = COUNT_END + 30;  // 910
+const END_CURSOR  = SUCCESS + 20;    // 930
+
+// ── Scroll offset ──────────────────────────────────────────────────────────────
+
+function scrollOffset(frame: number): number {
+  const keys: [number, number][] = [
+    [CMD1,   0],
+    [CMD3,   0],
+    [ALERT,  80],
+    [CMD4,   170],
+    [SEND,   250],
+    [COUNT_START, 320],
+    [SUCCESS, 430],
+    [END_CURSOR, 460],
+  ];
+  for (let i = 0; i < keys.length - 1; i++) {
+    if (frame >= keys[i][0] && frame < keys[i + 1][0]) {
+      return ipl(frame, [keys[i][0], keys[i + 1][0]], [keys[i][1], keys[i + 1][1]], EASE);
+    }
+  }
+  return keys[keys.length - 1][1];
+}
 
 // ── Badge ──────────────────────────────────────────────────────────────────────
 
 const GreenDot: React.FC<{ frame: number }> = ({ frame }) => {
-  const appear = ipl(frame, [D_IN, D_IN + 18], [0, 1]);
-  // slow organic pulse — no CSS, pure math
-  const pulse  = 1 + 0.18 * Math.sin((frame - D_IN) * 0.18);
+  const appear = ipl(frame, [D_IN, D_IN + 16], [0, 1]);
+  const pulse  = 1 + 0.2 * Math.sin((frame - D_IN) * 0.18);
   return (
-    <div style={{ position: 'relative', width: 18, height: 18, opacity: appear, flexShrink: 0 }}>
-      {/* outer glow ring */}
+    <div style={{ position: 'relative', width: 16, height: 16, opacity: appear, flexShrink: 0 }}>
       <div style={{
-        position: 'absolute',
-        inset: -7,
-        borderRadius: '50%',
-        background: 'rgba(52,199,89,0.22)',
+        position: 'absolute', inset: -8, borderRadius: '50%',
+        background: 'rgba(52,199,89,0.18)',
         transform: `scale(${pulse})`,
       }} />
-      {/* mid glow */}
       <div style={{
-        position: 'absolute',
-        inset: -3,
-        borderRadius: '50%',
-        background: 'rgba(52,199,89,0.35)',
-        transform: `scale(${1 + 0.09 * Math.sin((frame - D_IN) * 0.18 + 1)})`,
+        position: 'absolute', inset: -3, borderRadius: '50%',
+        background: 'rgba(52,199,89,0.32)',
+        transform: `scale(${1 + 0.1 * Math.sin((frame - D_IN) * 0.18 + 1)})`,
       }} />
-      {/* solid dot */}
       <div style={{
-        position: 'absolute',
-        inset: 0,
-        borderRadius: '50%',
+        position: 'absolute', inset: 0, borderRadius: '50%',
         background: '#34C759',
-        boxShadow: '0 0 14px rgba(52,199,89,0.9), 0 0 4px rgba(52,199,89,1)',
+        boxShadow: '0 0 12px rgba(52,199,89,0.9)',
       }} />
     </div>
   );
 };
 
 const MembersBadge: React.FC<{ frame: number }> = ({ frame }) => {
-  const slideIn = ipl(frame, [B_IN, B_IN + 28], [0, 1]);
-  const yIn     = ipl(frame, [B_IN, B_IN + 28], [40, 0]);
+  const slideIn = ipl(frame, [B_IN, B_IN + 26], [0, 1]);
+  const yIn     = ipl(frame, [B_IN, B_IN + 26], [36, 0]);
   const fadeOut = ipl(frame, [HOLD_END, CLEAR], [1, 0]);
   const textSnap = frame >= T_IN ? 1 : 0;
 
@@ -99,26 +131,22 @@ const MembersBadge: React.FC<{ frame: number }> = ({ frame }) => {
     <div style={{
       opacity: slideIn * fadeOut,
       transform: `translateY(${yIn}px)`,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
       <div style={{
         background: '#1C1C1E',
         borderRadius: 60,
-        padding: '14px 28px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 12,
-        boxShadow: '0 12px 48px rgba(0,0,0,0.18), 0 0 0 1px rgba(255,255,255,0.06)',
+        padding: '16px 30px',
+        display: 'flex', alignItems: 'center', gap: 14,
+        boxShadow: '0 12px 48px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.06)',
       }}>
         <GreenDot frame={frame} />
         <span style={{
           color: '#FFFFFF',
-          fontSize: 22,
+          fontSize: 28,
           fontFamily: "-apple-system, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif",
-          fontWeight: 300,
-          letterSpacing: '-0.2px',
+          fontWeight: 600,
+          letterSpacing: '-0.5px',
           opacity: textSnap,
           lineHeight: 1,
         }}>
@@ -129,175 +157,175 @@ const MembersBadge: React.FC<{ frame: number }> = ({ frame }) => {
   );
 };
 
-// ── Terminal ───────────────────────────────────────────────────────────────────
+// ── Terminal components ────────────────────────────────────────────────────────
 
-const MONO = "'Courier New', 'Menlo', 'Consolas', monospace";
-const SANS = "'Inter', -apple-system, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif";
+const MONO = "'SF Mono', 'Menlo', 'Courier New', monospace";
+const SANS = "-apple-system, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif";
 
-interface TermLineProps {
-  frame: number;
-  start: number;
-  text: string;
-  color?: string;
-  indent?: number;
-  fade?: boolean;
-  speed?: number;
-}
-
-const TermPrompt: React.FC<{ frame: number; start: number; cmd: string }> = ({ frame, start, cmd }) => {
+const Prompt: React.FC<{ frame: number; start: number; cmd: string }> = ({ frame, start, cmd }) => {
   if (frame < start) return null;
   const typed = typeAt(cmd, frame, start);
   const done  = isDone(cmd, frame, start);
-  const cursor = Math.sin(frame * 0.45) > 0;
+  const cur   = Math.sin(frame * 0.45) > 0;
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 0, minHeight: 28 }}>
-      <span style={{ color: '#A78BFA', fontFamily: MONO, fontSize: 19, marginRight: 10, flexShrink: 0 }}>~</span>
-      <span style={{ color: '#34D399', fontFamily: MONO, fontSize: 19, marginRight: 10, flexShrink: 0 }}>{'>'}</span>
-      <span style={{ color: '#F1F5F9', fontFamily: MONO, fontSize: 19 }}>{typed}</span>
+    <div style={{ display: 'flex', alignItems: 'center', minHeight: 28, marginBottom: 2 }}>
+      <span style={{ color: '#A78BFA', fontFamily: MONO, fontSize: 17, marginRight: 8, flexShrink: 0 }}>~</span>
+      <span style={{ color: '#34D399', fontFamily: MONO, fontSize: 17, marginRight: 8, flexShrink: 0 }}>{'>'}</span>
+      <span style={{ color: '#F1F5F9', fontFamily: MONO, fontSize: 17 }}>{typed}</span>
       {!done && (
         <span style={{
-          display: 'inline-block',
-          width: 10,
-          height: 20,
-          background: '#F1F5F9',
-          opacity: cursor ? 1 : 0,
-          marginLeft: 2,
-          verticalAlign: 'text-bottom',
+          display: 'inline-block', width: 9, height: 18,
+          background: '#F1F5F9', opacity: cur ? 1 : 0,
+          marginLeft: 2, verticalAlign: 'text-bottom',
         }} />
       )}
     </div>
   );
 };
 
-const TermOutput: React.FC<TermLineProps> = ({ frame, start, text, color = '#94A3B8', fade = true, speed }) => {
+const Out: React.FC<{ frame: number; start: number; text: string; color?: string }> = ({
+  frame, start, text, color = '#94A3B8',
+}) => {
   if (frame < start) return null;
-  const op = fade ? ipl(frame, [start, start + 12], [0, 1]) : 1;
+  const op = ipl(frame, [start, start + 10], [0, 1]);
+  return (
+    <div style={{ color, fontFamily: MONO, fontSize: 17, opacity: op, paddingLeft: 34, minHeight: 26, lineHeight: '26px' }}>
+      {text}
+    </div>
+  );
+};
+
+const AlertBlock: React.FC<{ frame: number }> = ({ frame }) => {
+  if (frame < ALERT) return null;
+  const op    = ipl(frame, [ALERT, ALERT + 15], [0, 1]);
+  const pulse = 0.08 + 0.04 * Math.sin((frame - ALERT) * 0.2);
   return (
     <div style={{
-      color,
-      fontFamily: MONO,
-      fontSize: 19,
       opacity: op,
-      paddingLeft: 38,
-      minHeight: 28,
-      lineHeight: '28px',
+      marginTop: 8, marginBottom: 2,
+      background: `rgba(52,211,153,${pulse})`,
+      border: '1px solid rgba(52,211,153,0.35)',
+      borderRadius: 8,
+      padding: '14px 20px',
     }}>
-      {speed !== undefined ? typeAt(text, frame, start, speed) : text}
-    </div>
-  );
-};
-
-const BlinkCursor: React.FC<{ frame: number; start: number }> = ({ frame, start }) => {
-  if (frame < start) return null;
-  const cursor = Math.sin(frame * 0.45) > 0;
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 0, marginTop: 4 }}>
-      <span style={{ color: '#A78BFA', fontFamily: MONO, fontSize: 19, marginRight: 10 }}>~</span>
-      <span style={{ color: '#34D399', fontFamily: MONO, fontSize: 19, marginRight: 10 }}>{'>'}</span>
-      <span style={{
-        display: 'inline-block',
-        width: 10,
-        height: 20,
-        background: '#F1F5F9',
-        opacity: cursor ? 1 : 0,
-        verticalAlign: 'text-bottom',
-      }} />
-    </div>
-  );
-};
-
-const TerminalWindow: React.FC<{ frame: number }> = ({ frame }) => {
-  const opacity = ipl(frame, [TERM_IN, TERM_IN + 22], [0, 1]);
-  const scale   = ipl(frame, [TERM_IN, TERM_IN + 28], [0.93, 1]);
-  const yIn     = ipl(frame, [TERM_IN, TERM_IN + 28], [30, 0]);
-
-  return (
-    <div style={{
-      opacity,
-      transform: `scale(${scale}) translateY(${yIn}px)`,
-      width: 920,
-      borderRadius: 14,
-      overflow: 'hidden',
-      boxShadow: '0 32px 80px rgba(0,0,0,0.16), 0 0 0 1px rgba(0,0,0,0.07)',
-    }}>
-      {/* Title bar */}
       <div style={{
-        background: '#ECECEC',
-        padding: '14px 20px',
-        display: 'flex',
-        alignItems: 'center',
-        borderBottom: '1px solid rgba(0,0,0,0.12)',
-        position: 'relative',
+        color: '#34D399',
+        fontFamily: MONO,
+        fontSize: 19,
+        fontWeight: 700,
+        letterSpacing: '0.06em',
       }}>
-        {/* Traffic lights */}
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', zIndex: 1 }}>
-          <div style={{ width: 13, height: 13, borderRadius: '50%', background: '#FF5F57', boxShadow: 'inset 0 0 0 0.5px rgba(0,0,0,0.12)' }} />
-          <div style={{ width: 13, height: 13, borderRadius: '50%', background: '#FFBD2E', boxShadow: 'inset 0 0 0 0.5px rgba(0,0,0,0.12)' }} />
-          <div style={{ width: 13, height: 13, borderRadius: '50%', background: '#28C840', boxShadow: 'inset 0 0 0 0.5px rgba(0,0,0,0.12)' }} />
-        </div>
-        {/* Centered title */}
-        <div style={{
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          textAlign: 'center',
-          fontFamily: SANS,
-          fontSize: 14,
-          fontWeight: 500,
-          color: '#555',
-          pointerEvents: 'none',
-        }}>
-          taught-by-sosa — zsh
-        </div>
-        {/* Sparkle */}
-        <div style={{ marginLeft: 'auto', zIndex: 1, fontSize: 18, color: '#C084FC' }}>✦</div>
+        ⬤ LOW RISK TRADE DETECTED
       </div>
+    </div>
+  );
+};
 
-      {/* Terminal body */}
-      <div style={{
-        background: '#181825',
-        padding: '32px 36px 40px',
-        minHeight: 520,
-        lineHeight: '28px',
+const CountUp: React.FC<{ frame: number }> = ({ frame }) => {
+  if (frame < COUNT_START) return null;
+
+  const elapsed  = frame - COUNT_START;
+  const stepIdx  = Math.min(Math.floor(elapsed / FRAMES_PER_STEP), COUNT_STEPS.length - 1);
+  const stepFrame = elapsed - stepIdx * FRAMES_PER_STEP;
+  const isLast   = stepIdx === COUNT_STEPS.length - 1;
+  const value    = COUNT_STEPS[stepIdx];
+
+  // scale punch on each new number
+  const scale = ipl(stepFrame, [0, FRAMES_PER_STEP - 1], [1.18, 1.0]);
+  // brief blur on landing
+  const blur  = ipl(stepFrame, [0, 2], [2.5, 0]);
+  // final glow
+  const glow  = isLast
+    ? `0 0 ${20 + 10 * Math.sin((frame - COUNT_END) * 0.2)}px rgba(52,211,153,0.7)`
+    : 'none';
+
+  return (
+    <div style={{ paddingLeft: 34, marginTop: 10, marginBottom: 10 }}>
+      <span style={{
+        fontFamily: MONO,
+        fontSize: 80,
+        fontWeight: 700,
+        color: '#34D399',
+        display: 'inline-block',
+        transform: `scale(${scale})`,
+        transformOrigin: 'left center',
+        filter: `blur(${blur}px)`,
+        textShadow: glow,
+        letterSpacing: '-2px',
+        lineHeight: 1,
       }}>
-        <TermPrompt frame={frame} start={CMD1} cmd="active_members --live" />
-        <TermOutput  frame={frame} start={OUT1} text="152 traders. Live." color="#34D399" />
+        {value}
+      </span>
+    </div>
+  );
+};
 
-        {frame >= CMD2 - 10 && <div style={{ height: 20 }} />}
-        <TermPrompt frame={frame} start={CMD2} cmd="what_are_they_doing" />
-        <TermOutput  frame={frame} start={OUT2A} text="Running setups we built with them." />
-        <TermOutput  frame={frame} start={OUT2B} text="Real entries. Real exits. In live markets." />
+const TerminalBody: React.FC<{ frame: number }> = ({ frame }) => {
+  const scroll = scrollOffset(frame);
+  const cur    = Math.sin(frame * 0.45) > 0;
 
-        {frame >= CMD3 - 10 && <div style={{ height: 20 }} />}
-        <TermPrompt frame={frame} start={CMD3} cmd="proof" />
-        <TermOutput  frame={frame} start={OUT3} text="You're looking at it." color="#FBBF24" />
+  return (
+    <div style={{ height: 700, overflow: 'hidden', background: '#181825' }}>
+      <div style={{
+        padding: '28px 32px 36px',
+        transform: `translateY(-${scroll}px)`,
+        lineHeight: '26px',
+      }}>
 
-        <BlinkCursor frame={frame} start={BLINK} />
+        {/* ── monitor_market ── */}
+        <Prompt frame={frame} start={CMD1} cmd="monitor_market --live" />
+        <Out frame={frame} start={OUT1A} text="Market volatility spike detected." color="#F1F5F9" />
+        <Out frame={frame} start={OUT1B} text="  BTC -4.2% past hour" color="#FF6B6B" />
+        <Out frame={frame} start={OUT1C} text="  ETH -6.1% past hour" color="#FF6B6B" />
+        <Out frame={frame} start={OUT1D} text="  Long liquidations increasing" color="#FBBF24" />
 
-        {/* By Sosa — appears after cursor settles */}
-        {frame >= BLINK + 20 && (
-          <div style={{
-            opacity: ipl(frame, [BLINK + 20, BLINK + 40], [0, 1]),
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            marginTop: 36,
-            paddingTop: 28,
-            borderTop: '1px solid rgba(255,255,255,0.07)',
-          }}>
-            {/* Apple logo SVG */}
-            <svg width="18" height="22" viewBox="0 0 814 1000" fill="#AEAEB2">
-              <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-37.5-156.8-107C18.3 716.5 0 610.9 0 509.4c0-194.3 126.4-297.5 250.8-297.5 66.1 0 121.2 43.4 162.7 43.4 39.5 0 101.1-46 176.3-46 28.5 0 130.9 2.6 198.3 99.2zm-234-181.5c31.1-36.9 53.1-88.1 53.1-139.3 0-7.1-.6-14.3-1.9-20.1-50.6 1.9-110.8 33.7-147.1 75.8-28.5 32.4-55.1 83.6-55.1 135.5 0 7.8 1.3 15.6 1.9 18.1 3.2.6 8.4 1.3 13.6 1.3 45.4 0 102.5-30.4 135.5-71.3z" />
-            </svg>
+        {frame >= CMD2 - 8 && <div style={{ height: 18 }} />}
+
+        {/* ── calculating_risk ── */}
+        <Prompt frame={frame} start={CMD2} cmd="calculating_risk" />
+        <Out frame={frame} start={OUT2A} text="  Liquidity zones mapped" color="#34D399" />
+        <Out frame={frame} start={OUT2B} text="  Funding imbalance detected" color="#34D399" />
+        <Out frame={frame} start={OUT2C} text="  Short-term reversal probability increasing" color="#34D399" />
+
+        {frame >= CMD3 - 8 && <div style={{ height: 18 }} />}
+
+        {/* ── analyzing_positioning ── */}
+        <Prompt frame={frame} start={CMD3} cmd="analyzing_positioning" />
+        <Out frame={frame} start={OUT3A} text="  Risk exposure minimized" color="#94A3B8" />
+        <Out frame={frame} start={OUT3B} text="  Entry optimized" color="#94A3B8" />
+        <Out frame={frame} start={OUT3C} text="  Profit targets configured" color="#94A3B8" />
+
+        {/* ── ALERT ── */}
+        <AlertBlock frame={frame} />
+        <Out frame={frame} start={CONF} text="  Confidence score: 87%" color="#A78BFA" />
+
+        {frame >= CMD4 - 8 && <div style={{ height: 18 }} />}
+
+        {/* ── notifying_members ── */}
+        <Prompt frame={frame} start={CMD4} cmd="notifying_members" />
+        <Out frame={frame} start={DISC}  text="  Discord........  SENT" color="#34D399" />
+        <Out frame={frame} start={INSTA} text="  Instagram......  SENT" color="#34D399" />
+        <Out frame={frame} start={PUSH}  text="  Push............  SENT" color="#34D399" />
+
+        {frame >= SEND - 4 && <div style={{ height: 12 }} />}
+        <Out frame={frame} start={SEND} text="  sending_to_members..." color="#FBBF24" />
+
+        {/* ── count-up ── */}
+        <CountUp frame={frame} />
+
+        {/* ── success ── */}
+        <Out frame={frame} start={SUCCESS} text="  152 members notified successfully" color="#34D399" />
+
+        {/* ── idle cursor ── */}
+        {frame >= END_CURSOR && (
+          <div style={{ display: 'flex', alignItems: 'center', marginTop: 8 }}>
+            <span style={{ color: '#A78BFA', fontFamily: MONO, fontSize: 17, marginRight: 8 }}>~</span>
+            <span style={{ color: '#34D399', fontFamily: MONO, fontSize: 17, marginRight: 8 }}>{'>'}</span>
             <span style={{
-              fontFamily: "-apple-system, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif",
-              fontSize: 15,
-              fontWeight: 400,
-              color: '#AEAEB2',
-              letterSpacing: '0.04em',
-            }}>
-              By Sosa
-            </span>
+              display: 'inline-block', width: 9, height: 18,
+              background: '#F1F5F9', opacity: cur ? 1 : 0,
+              verticalAlign: 'text-bottom',
+            }} />
           </div>
         )}
       </div>
@@ -305,7 +333,46 @@ const TerminalWindow: React.FC<{ frame: number }> = ({ frame }) => {
   );
 };
 
-// ── Root composition ───────────────────────────────────────────────────────────
+const TerminalWindow: React.FC<{ frame: number }> = ({ frame }) => {
+  const opacity = ipl(frame, [TERM_IN, TERM_IN + 20], [0, 1]);
+  const scale   = ipl(frame, [TERM_IN, TERM_IN + 26], [0.94, 1]);
+
+  return (
+    <div style={{
+      opacity, transform: `scale(${scale})`,
+      width: 940,
+      borderRadius: 14, overflow: 'hidden',
+      boxShadow: '0 32px 80px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.08)',
+    }}>
+      {/* Title bar */}
+      <div style={{
+        background: '#ECECEC', padding: '13px 20px',
+        display: 'flex', alignItems: 'center',
+        borderBottom: '1px solid rgba(0,0,0,0.12)',
+        position: 'relative',
+      }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', zIndex: 1 }}>
+          <div style={{ width: 13, height: 13, borderRadius: '50%', background: '#FF5F57' }} />
+          <div style={{ width: 13, height: 13, borderRadius: '50%', background: '#FFBD2E' }} />
+          <div style={{ width: 13, height: 13, borderRadius: '50%', background: '#28C840' }} />
+        </div>
+        <div style={{
+          position: 'absolute', left: 0, right: 0,
+          textAlign: 'center', fontFamily: SANS,
+          fontSize: 13, fontWeight: 500, color: '#555',
+          pointerEvents: 'none',
+        }}>
+          market-intel — zsh
+        </div>
+        <div style={{ marginLeft: 'auto', zIndex: 1, fontSize: 16, color: '#C084FC' }}>✦</div>
+      </div>
+
+      <TerminalBody frame={frame} />
+    </div>
+  );
+};
+
+// ── Root ───────────────────────────────────────────────────────────────────────
 
 export const MembersLiveVideo: React.FC = () => {
   const frame = useCurrentFrame();
@@ -317,10 +384,7 @@ export const MembersLiveVideo: React.FC = () => {
       alignItems: 'center',
       justifyContent: 'center',
     }}>
-      {/* Phase 1: badge */}
       {frame < CLEAR && <MembersBadge frame={frame} />}
-
-      {/* Phase 2: terminal */}
       {frame >= TERM_IN && <TerminalWindow frame={frame} />}
     </AbsoluteFill>
   );

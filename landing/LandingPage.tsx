@@ -49,7 +49,7 @@ export const LandingPage: React.FC = () => (
       opacity: 0.55, marginBottom: 52,
     }} />
 
-    {/* Video */}
+    {/* Members Live Video — top */}
     <div style={{
       borderRadius: 28, overflow: 'hidden',
       boxShadow: '0 24px 64px rgba(0,0,0,0.14), 0 0 0 1px rgba(0,0,0,0.06)',
@@ -57,8 +57,8 @@ export const LandingPage: React.FC = () => (
       background: '#fff',
     }}>
       <Player
-        component={HermesVideo}
-        durationInFrames={750}
+        component={MembersLiveVideo}
+        durationInFrames={960}
         fps={30}
         compositionWidth={1080}
         compositionHeight={1920}
@@ -76,10 +76,10 @@ export const LandingPage: React.FC = () => (
       PRESS PLAY TO WATCH ↑
     </p>
 
-    {/* Members Live Video */}
+    {/* Hermes Video — below */}
     <div style={{ marginTop: 64, textAlign: 'center' }}>
       <p style={{ fontSize: 11, color: '#D1D1D6', letterSpacing: '0.14em', marginBottom: 20 }}>
-        LIVE COMMUNITY
+        MARKET INTELLIGENCE
       </p>
       <div style={{
         borderRadius: 28, overflow: 'hidden',
@@ -89,8 +89,8 @@ export const LandingPage: React.FC = () => (
         margin: '0 auto',
       }}>
         <Player
-          component={MembersLiveVideo}
-          durationInFrames={580}
+          component={HermesVideo}
+          durationInFrames={750}
           fps={30}
           compositionWidth={1080}
           compositionHeight={1920}
