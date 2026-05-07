@@ -64,10 +64,9 @@ export const Scene6: React.FC = () => {
           opacity: statsO, transform: `translateY(${statsY}px)`,
         }}>
           {STATS.map((stat, i) => {
-            const es = 1 + osc(f, 0.10, 28, i * 1.6);
             return (
               <div key={stat.label} style={{ flex: 1, textAlign: 'center', padding: '22px 12px', borderRight: i < STATS.length - 1 ? `1px solid ${C.panelBorder}` : 'none' }}>
-                <span style={{ fontSize: 22, display: 'inline-block', transform: `scale(${es})`, marginBottom: 8 }}>{stat.emoji}</span>
+                <span style={{ fontSize: 22, display: 'block', marginBottom: 8 }}>{stat.emoji}</span>
                 <div style={{ fontFamily: FONT, fontSize: 30, fontWeight: 800, color: stat.color, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums' }}>{stat.value}</div>
                 <div style={{ fontFamily: FONT, fontSize: 10, fontWeight: 700, color: C.gray300, letterSpacing: '0.12em', marginTop: 5 }}>{stat.label}</div>
               </div>

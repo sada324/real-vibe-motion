@@ -12,22 +12,22 @@ export const C = {
   greenDim:    'rgba(52,199,89,0.13)',
   red:         '#FF3B30',
   redDim:      'rgba(255,59,48,0.10)',
-  // Violet — the killer accent. Replaces teal everywhere.
-  accent:      '#7C3AED',
-  accentDim:   'rgba(124,58,237,0.11)',
-  accentGlow:  'rgba(124,58,237,0.22)',
-  // Legacy aliases so all scenes compile unchanged
+  // Apple system blue — clean, trustworthy, recognised
+  accent:      '#007AFF',
+  accentDim:   'rgba(0,122,255,0.10)',
+  accentGlow:  'rgba(0,122,255,0.20)',
+  // Legacy aliases (all scenes compile unchanged)
   white:  '#FFFFFF',
-  teal:   '#7C3AED',
-  tealDim:'rgba(124,58,237,0.11)',
-  tealGlow:'rgba(124,58,237,0.22)',
-  blue:        '#7C3AED',
-  blueLight:   '#7C3AED',
-  blueGlow:    'rgba(124,58,237,0.18)',
-  blueGlowStrong:'rgba(124,58,237,0.40)',
-  cyan:        '#7C3AED',
-  cyanDim:     'rgba(124,58,237,0.11)',
-  cyanGlow:    'rgba(124,58,237,0.22)',
+  teal:   '#007AFF',
+  tealDim:'rgba(0,122,255,0.10)',
+  tealGlow:'rgba(0,122,255,0.20)',
+  blue:        '#007AFF',
+  blueLight:   '#007AFF',
+  blueGlow:    'rgba(0,122,255,0.18)',
+  blueGlowStrong:'rgba(0,122,255,0.40)',
+  cyan:        '#007AFF',
+  cyanDim:     'rgba(0,122,255,0.10)',
+  cyanGlow:    'rgba(0,122,255,0.20)',
 } as const;
 
 export const FONT = "'Inter', -apple-system, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif";
