@@ -59,9 +59,9 @@ export const LifestyleScene: React.FC<{ frame: number }> = ({ frame }) => {
       {/* Compact terminal rectangle */}
       <div style={{
         position: 'absolute',
-        bottom: 300,
+        top: '50%',
         left: '50%',
-        transform: 'translateX(-50%)',
+        transform: 'translate(-50%, -50%)',
         width: 860,
         borderRadius: 12,
         overflow: 'hidden',
