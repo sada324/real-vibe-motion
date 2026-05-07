@@ -4,6 +4,7 @@ import { HelloWorld, myCompSchema } from "./HelloWorld";
 import { Logo, myCompSchema2 } from "./HelloWorld/Logo";
 import { HermesVideo } from "./HermesVideo";
 import { MembersLiveVideo } from "./MembersLiveVideo";
+import { LifestyleVideo } from "./LifestyleVideo";
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -12,6 +13,14 @@ export const RemotionRoot: React.FC = () => {
         id="MembersLiveVideo"
         component={MembersLiveVideo}
         durationInFrames={780}
+        fps={30}
+        width={1080}
+        height={1920}
+      />
+      <Composition
+        id="LifestyleVideo"
+        component={LifestyleVideo}
+        durationInFrames={600}
         fps={30}
         width={1080}
         height={1920}
