@@ -1,6 +1,7 @@
 import React from 'react';
 import { Player } from '@remotion/player';
 import { HermesVideo } from '../src/HermesVideo';
+import { MembersLiveVideo } from '../src/MembersLiveVideo';
 
 export const LandingPage: React.FC = () => (
   <div style={{
@@ -74,6 +75,32 @@ export const LandingPage: React.FC = () => (
     }}>
       PRESS PLAY TO WATCH ↑
     </p>
+
+    {/* Members Live Video */}
+    <div style={{ marginTop: 64, textAlign: 'center' }}>
+      <p style={{ fontSize: 11, color: '#D1D1D6', letterSpacing: '0.14em', marginBottom: 20 }}>
+        LIVE COMMUNITY
+      </p>
+      <div style={{
+        borderRadius: 28, overflow: 'hidden',
+        boxShadow: '0 24px 64px rgba(0,0,0,0.14), 0 0 0 1px rgba(0,0,0,0.06)',
+        maxWidth: 320, width: '100%',
+        background: '#fff',
+        margin: '0 auto',
+      }}>
+        <Player
+          component={MembersLiveVideo}
+          durationInFrames={580}
+          fps={30}
+          compositionWidth={1080}
+          compositionHeight={1920}
+          style={{ width: '100%', borderRadius: 28, display: 'block' }}
+          controls
+          loop
+          autoPlay={false}
+        />
+      </div>
+    </div>
 
     {/* Stats card */}
     <div style={{
