@@ -49,9 +49,9 @@ const CandleChart: React.FC<{ w: number; h: number; opacity: number }> = ({ w, h
         const bodyH = Math.max(Math.abs(cy2 - oy), 2);
         return (
           <g key={i}>
-            <line x1={x} y1={hy} x2={x} y2={ly} stroke={col} strokeWidth={1.2} opacity={0.5} />
+            <line x1={x} y1={hy} x2={x} y2={ly} stroke={col} strokeWidth={1.2} opacity={0.45} />
             <rect x={x - cw / 2} y={bodyT} width={cw} height={bodyH}
-              fill={col} opacity={0.75} rx={1.5} />
+              fill={col} opacity={0.70} rx={1.5} />
           </g>
         );
       })}
@@ -59,34 +59,48 @@ const CandleChart: React.FC<{ w: number; h: number; opacity: number }> = ({ w, h
   );
 };
 
+// Scene 1 — 105 frames = 3.5s
 export const Scene1: React.FC = () => {
   const f = useCurrentFrame();
 
-  const opacity  = sceneFade(f, 90, 15, 72, 18);
-  const camScale = remap(f, [0, 90], [1.0, 1.06]);
-  const chartOpa = remap(f, [0, 25], [0, 1]) * 0.13;
+  const opacity  = sceneFade(f, 105, 15, 87, 18);
+  const camScale = remap(f, [0, 105], [1.0, 1.07]);
+  const chartOpa = remap(f, [0, 28], [0, 1]) * 0.14;
 
-  const line1Y = remap(f, [18, 42], [32, 0], EASE_OUT);
-  const line1O = remap(f, [18, 42], [0, 1],  EASE_OUT);
-  const line2Y = remap(f, [32, 56], [32, 0], EASE_OUT);
-  const line2O = remap(f, [32, 56], [0, 1],  EASE_OUT);
-  const labelO = remap(f, [50, 68], [0, 1],  EASE_OUT);
-  const lineW  = remap(f, [50, 68], [0, 1],  EASE_OUT) * 72;
+  // Main headline
+  const line1Y = remap(f, [20, 44], [34, 0], EASE_OUT);
+  const line1O = remap(f, [20, 44], [0, 1],  EASE_OUT);
+  const line2Y = remap(f, [34, 58], [34, 0], EASE_OUT);
+  const line2O = remap(f, [34, 58], [0, 1],  EASE_OUT);
+
+  // Ticker row that slides in below the headline
+  const tickerO = remap(f, [55, 72], [0, 1], EASE_OUT);
+  const tickerY = remap(f, [55, 72], [16, 0], EASE_OUT);
+
+  // Bottom wordmark
+  const labelO = remap(f, [52, 70], [0, 1], EASE_OUT);
+  const lineW  = remap(f, [52, 70], [0, 1], EASE_OUT) * 72;
+
+  const TICKERS = [
+    { sym: 'BTC', val: '$67,420', chg: '+2.4%', up: true },
+    { sym: 'ETH', val: '$3,518',  chg: '+1.8%', up: true },
+    { sym: 'SOL', val: '$182',    chg: '−0.6%', up: false },
+  ];
 
   return (
     <AbsoluteFill style={{ background: C.bg, overflow: 'hidden', opacity }}>
-      {/* Faint candle chart background */}
+      {/* Faint candle chart */}
       <AbsoluteFill style={{
         transform: `scale(${camScale})`,
         transformOrigin: 'center center',
-        filter: 'blur(12px)',
+        filter: 'blur(14px)',
       }}>
         <CandleChart w={1080} h={1920} opacity={chartOpa} />
       </AbsoluteFill>
 
-      {/* White vignette to fade edges */}
+      {/* White vignette */}
       <AbsoluteFill style={{
-        background: `radial-gradient(ellipse 75% 55% at 50% 50%, transparent 0%, ${C.bg} 78%)`,
+        background: `radial-gradient(ellipse 75% 55% at 50% 50%, transparent 0%, ${C.bg} 76%)`,
       }} />
 
       {/* Hero text */}
@@ -94,41 +108,71 @@ export const Scene1: React.FC = () => {
         display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center',
         padding: '0 96px',
+        gap: 0,
       }}>
-        <div style={{ textAlign: 'center' }}>
-          <p style={{
-            fontFamily: FONT, fontSize: 82, fontWeight: 200,
-            color: C.black, letterSpacing: '-0.03em', lineHeight: 1.1,
-            margin: 0,
-            opacity: line1O, transform: `translateY(${line1Y}px)`,
-          }}>
-            Most traders stare
-          </p>
-          <p style={{
-            fontFamily: FONT, fontSize: 82, fontWeight: 200,
-            color: C.gray300, letterSpacing: '-0.03em', lineHeight: 1.1,
-            margin: 0,
-            opacity: line2O, transform: `translateY(${line2Y}px)`,
-          }}>
-            at candles…
-          </p>
+        <p style={{
+          fontFamily: FONT, fontSize: 82, fontWeight: 200,
+          color: C.black, letterSpacing: '-0.03em', lineHeight: 1.1,
+          margin: 0, textAlign: 'center',
+          opacity: line1O, transform: `translateY(${line1Y}px)`,
+        }}>
+          Most traders stare
+        </p>
+        <p style={{
+          fontFamily: FONT, fontSize: 82, fontWeight: 200,
+          color: C.gray300, letterSpacing: '-0.03em', lineHeight: 1.1,
+          margin: '0 0 52px', textAlign: 'center',
+          opacity: line2O, transform: `translateY(${line2Y}px)`,
+        }}>
+          at candles…
+        </p>
+
+        {/* Live ticker row */}
+        <div style={{
+          display: 'flex', gap: 16,
+          opacity: tickerO, transform: `translateY(${tickerY}px)`,
+        }}>
+          {TICKERS.map(t => (
+            <div key={t.sym} style={{
+              background: C.bgSoft,
+              border: `1px solid ${C.panelBorder}`,
+              borderRadius: 14,
+              padding: '14px 22px',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+              boxShadow: C.shadow,
+              minWidth: 140,
+            }}>
+              <span style={{
+                fontFamily: FONT, fontSize: 13, fontWeight: 600,
+                color: C.gray300, letterSpacing: '0.10em',
+              }}>{t.sym}</span>
+              <span style={{
+                fontFamily: FONT, fontSize: 24, fontWeight: 600,
+                color: C.black, letterSpacing: '-0.02em',
+                fontVariantNumeric: 'tabular-nums',
+              }}>{t.val}</span>
+              <span style={{
+                fontFamily: FONT, fontSize: 14, fontWeight: 500,
+                color: t.up ? C.green : C.red,
+                letterSpacing: '-0.01em',
+              }}>{t.chg}</span>
+            </div>
+          ))}
         </div>
       </AbsoluteFill>
 
       {/* Bottom wordmark */}
       <AbsoluteFill style={{
         display: 'flex', flexDirection: 'column', alignItems: 'center',
-        justifyContent: 'flex-end', paddingBottom: 112, gap: 14,
+        justifyContent: 'flex-end', paddingBottom: 108, gap: 14,
       }}>
         <div style={{
           width: lineW * 2, height: 1,
-          background: C.gray500,
-          opacity: labelO,
+          background: C.gray500, opacity: labelO,
         }} />
         <span style={{
           fontFamily: FONT, fontSize: 18, fontWeight: 400,
-          color: C.gray300, letterSpacing: '0.28em',
-          opacity: labelO,
+          color: C.gray300, letterSpacing: '0.28em', opacity: labelO,
         }}>
           HERMES
         </span>
