@@ -295,7 +295,7 @@ const TermBody: React.FC<{ frame: number }> = ({ frame }) => {
           <div style={{
             color: '#34D399', fontFamily: MONO, fontSize: 17, fontWeight: 700,
             paddingLeft: 34, minHeight: 24, lineHeight: '24px',
-            opacity: ipl(frame, [ALERT, ALERT + 8], [0, 1]) * (0.55 + 0.45 * Math.sin((frame - ALERT) * 0.08)),
+            opacity: ipl(frame, [ALERT, ALERT + 8], [0, 1]) * (Math.floor((frame - ALERT) / 14) % 2 === 0 ? 1 : 0.15),
           }}>
             {'  LOW RISK TRADE DETECTED'}
           </div>
