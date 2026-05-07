@@ -32,58 +32,62 @@ function isDone(text: string, frame: number, start: number, speed = 1.8): boolea
 
 // ── Timing ─────────────────────────────────────────────────────────────────────
 
-// Phase 1: badge — ends at exactly 4 s
+// Badge — ~5 seconds
 const B_IN     = 18;
 const D_IN     = 48;
 const T_IN     = 76;
-const HOLD_END = 100;
-const CLEAR    = 128;
+const HOLD_END = 130;
+const CLEAR    = 160;
 
-// Phase 2: terminal
-const TERM_IN = 142;
+// Terminal
+const TERM_IN = 174;
 
-const CMD1  = 162;   // monitor_market --live
-const OUT1A = 190;   // Market volatility spike detected.
-const OUT1B = 204;   // BTC -4.2% | ETH -6.1%
-const OUT1C = 218;   // Long liquidations increasing
+const CMD1  = 194;
+const OUT1A = 224;   // Market volatility spike detected.
+const OUT1B = 240;   // BTC -4.2% past hour
+const OUT1C = 258;   // ETH -6.1% past hour
+const OUT1D = 276;   // Long liquidations increasing
 
-const CMD2  = 244;   // calculating_risk
-const OUT2A = 266;   // Liquidity zones mapped
-const OUT2B = 280;   // Short-term reversal probability increasing
+const CMD2  = 304;
+const OUT2A = 328;
+const OUT2B = 344;
 
-const CMD3  = 312;   // analyzing_positioning
-const OUT3A = 334;   // Risk exposure minimized
-const OUT3B = 348;   // Entry optimized. Profit targets configured.
+const CMD3  = 372;
+const OUT3A = 396;
+const OUT3B = 412;
 
-const ALERT = 374;   // LOW RISK TRADE DETECTED  (normal output, green bold)
-const CONF  = 396;   // Confidence score: 87%
+const ALERT = 438;
+const CONF  = 460;
 
-const CMD4  = 422;   // notifying_members
-const DISC  = 448;   // Discord........ SENT
-const INSTA = 464;   // Instagram...... SENT
-const PUSH  = 480;   // Push............ SENT
-const SEND  = 498;   // sending_to_members...
+const CMD4  = 488;
+// Discord........ (8 dots @ 0.5/frame = 16f) → SENT blinks at +18
+const DISC  = 514;
+// Instagram...... (6 dots = 12f) → SENT at +14 — starts after Discord SENT settles
+const INSTA = 544;
+// Push............ (12 dots = 24f) → SENT at +26
+const PUSH  = 572;
 
-// Count-up: single line, value updates rapidly
-const COUNT_START  = 524;
-const FRAMES_PER   = 4;
-const COUNT_STEPS  = ['003', '018', '041', '067', '089', '104', '121', '138', '147', '152'];
-const COUNT_END    = COUNT_START + COUNT_STEPS.length * FRAMES_PER; // 564
+const SEND  = 610;   // sending_to_members...
 
-const SUCCESS  = COUNT_END + 22;  // 586
-const END_CUR  = SUCCESS + 18;    // 604
+const COUNT_START = 636;
+const FRAMES_PER  = 4;
+const COUNT_STEPS = ['003', '018', '041', '067', '089', '104', '121', '138', '147', '152'];
+const COUNT_END   = COUNT_START + COUNT_STEPS.length * FRAMES_PER; // 676
+
+const SUCCESS  = COUNT_END + 24;  // 700
+const END_CUR  = SUCCESS + 18;    // 718
 
 // ── Scroll ─────────────────────────────────────────────────────────────────────
 
 function scrollY(frame: number): number {
   const keys: [number, number][] = [
-    [CMD1,  0],
-    [CMD3,  0],
-    [ALERT, 68],
-    [CMD4,  128],
-    [SEND,  190],
-    [COUNT_START, 230],
-    [END_CUR, 260],
+    [CMD1,   0],
+    [CMD3,   0],
+    [ALERT,  76],
+    [CMD4,   148],
+    [SEND,   220],
+    [COUNT_START, 268],
+    [END_CUR, 298],
   ];
   for (let i = 0; i < keys.length - 1; i++) {
     if (frame >= keys[i][0] && frame < keys[i + 1][0]) {
@@ -122,7 +126,6 @@ const MembersBadge: React.FC<{ frame: number }> = ({ frame }) => {
   const yIn     = ipl(frame, [B_IN, B_IN + 24], [34, 0]);
   const fadeOut = ipl(frame, [HOLD_END, CLEAR], [1, 0]);
   const snap    = frame >= T_IN ? 1 : 0;
-
   return (
     <div style={{
       opacity: slideIn * fadeOut,
@@ -185,35 +188,63 @@ const Out: React.FC<{
     <div style={{
       color, fontFamily: MONO, fontSize: 17,
       fontWeight: bold ? 700 : 400,
-      opacity: op, paddingLeft: 34,
-      minHeight: 24, lineHeight: '24px',
+      opacity: op, paddingLeft: 34, minHeight: 24, lineHeight: '24px',
     }}>
       {text}
     </div>
   );
 };
 
-// Counter line — single line that updates value rapidly
+// Dots type in one by one, then SENT blinks in
+const SentLine: React.FC<{
+  frame: number; start: number; label: string; totalDots: number;
+}> = ({ frame, start, label, totalDots }) => {
+  if (frame < start) return null;
+
+  const DOTS_SPEED = 0.5; // dots per frame
+  const dotsShown  = Math.min(Math.floor((frame - start) * DOTS_SPEED), totalDots);
+  const allDoneAt  = start + Math.ceil(totalDots / DOTS_SPEED);
+  const sentStart  = allDoneAt + 2;
+  const sentVisible = frame >= sentStart;
+  const blinkAge   = frame - sentStart;
+
+  // 3 quick blinks then solid
+  const sentOp = sentVisible
+    ? (blinkAge < 14 ? (Math.floor(blinkAge / 2) % 2 === 0 ? 1 : 0) : 1)
+    : 0;
+
+  const lineOp = ipl(frame, [start, start + 6], [0, 1]);
+
+  return (
+    <div style={{
+      fontFamily: MONO, fontSize: 17,
+      opacity: lineOp, paddingLeft: 34, minHeight: 24, lineHeight: '24px',
+      display: 'flex', alignItems: 'center',
+    }}>
+      <span style={{ color: '#94A3B8' }}>{label}</span>
+      <span style={{ color: '#94A3B8' }}>{'.' .repeat(dotsShown)}</span>
+      <span style={{ color: '#34D399', fontWeight: 600, opacity: sentOp }}>
+        {sentVisible ? '  SENT' : ''}
+      </span>
+    </div>
+  );
+};
+
+// Counter line — single line that flips through values
 const CounterLine: React.FC<{ frame: number }> = ({ frame }) => {
   if (frame < COUNT_START) return null;
-
   const elapsed  = frame - COUNT_START;
   const stepIdx  = Math.min(Math.floor(elapsed / FRAMES_PER), COUNT_STEPS.length - 1);
   const isLast   = stepIdx === COUNT_STEPS.length - 1;
   const value    = COUNT_STEPS[stepIdx];
-
-  const glow = isLast
-    ? `rgba(52,211,153,${0.6 + 0.3 * Math.sin((frame - COUNT_END) * 0.22)})`
+  const glow     = isLast
+    ? `rgba(52,211,153,${0.55 + 0.3 * Math.sin((frame - COUNT_END) * 0.22)})`
     : 'transparent';
-
   return (
-    <div style={{
-      paddingLeft: 34, minHeight: 24, lineHeight: '24px',
-    }}>
+    <div style={{ paddingLeft: 34, minHeight: 24, lineHeight: '24px' }}>
       <span style={{
-        fontFamily: MONO, fontSize: 17, fontWeight: 700,
-        color: '#34D399',
-        textShadow: isLast ? `0 0 18px ${glow}` : 'none',
+        fontFamily: MONO, fontSize: 17, fontWeight: 700, color: '#34D399',
+        textShadow: isLast ? `0 0 16px ${glow}` : 'none',
       }}>
         {value}
       </span>
@@ -231,8 +262,9 @@ const TermBody: React.FC<{ frame: number }> = ({ frame }) => {
 
         <Prompt frame={frame} start={CMD1} cmd="monitor_market --live" />
         <Out frame={frame} start={OUT1A} text="  Market volatility spike detected." color="#F1F5F9" />
-        <Out frame={frame} start={OUT1B} text="  BTC -4.2%  |  ETH -6.1% past hour" color="#FF6B6B" />
-        <Out frame={frame} start={OUT1C} text="  Long liquidations increasing" color="#FBBF24" />
+        <Out frame={frame} start={OUT1B} text="  BTC -4.2% past hour" color="#FF6B6B" />
+        <Out frame={frame} start={OUT1C} text="  ETH -6.1% past hour" color="#FF6B6B" />
+        <Out frame={frame} start={OUT1D} text="  Long liquidations increasing" color="#FBBF24" />
 
         {frame >= CMD2 - 6 && <div style={{ height: 16 }} />}
 
@@ -254,9 +286,9 @@ const TermBody: React.FC<{ frame: number }> = ({ frame }) => {
         {frame >= CMD4 - 6 && <div style={{ height: 16 }} />}
 
         <Prompt frame={frame} start={CMD4} cmd="notifying_members" />
-        <Out frame={frame} start={DISC}  text="  Discord........  SENT" color="#34D399" />
-        <Out frame={frame} start={INSTA} text="  Instagram......  SENT" color="#34D399" />
-        <Out frame={frame} start={PUSH}  text="  Push............  SENT" color="#34D399" />
+        <SentLine frame={frame} start={DISC}  label="  Discord........"   totalDots={8} />
+        <SentLine frame={frame} start={INSTA} label="  Instagram......"   totalDots={6} />
+        <SentLine frame={frame} start={PUSH}  label="  Push............"  totalDots={12} />
 
         {frame >= SEND - 4 && <div style={{ height: 10 }} />}
         <Out frame={frame} start={SEND} text="  sending_to_members..." color="#FBBF24" />
@@ -285,7 +317,6 @@ const TermBody: React.FC<{ frame: number }> = ({ frame }) => {
 const TerminalWindow: React.FC<{ frame: number }> = ({ frame }) => {
   const opacity = ipl(frame, [TERM_IN, TERM_IN + 18], [0, 1]);
   const scale   = ipl(frame, [TERM_IN, TERM_IN + 24], [0.94, 1]);
-
   return (
     <div style={{
       opacity, transform: `scale(${scale})`,
