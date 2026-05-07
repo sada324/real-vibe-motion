@@ -389,7 +389,7 @@ const DiscordNotif: React.FC<{ frame: number }> = ({ frame }) => {
       zIndex: 100,
     }}>
       <Img
-        src={staticFile('discord-notification.png')}
+        src={staticFile('discord notification.png')}
         style={{ width: '100%', display: 'block', borderRadius: 18 }}
       />
     </div>
