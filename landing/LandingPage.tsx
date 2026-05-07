@@ -58,7 +58,7 @@ export const LandingPage: React.FC = () => (
     }}>
       <Player
         component={MembersLiveVideo}
-        durationInFrames={960}
+        durationInFrames={640}
         fps={30}
         compositionWidth={1080}
         compositionHeight={1920}
