@@ -8,17 +8,14 @@ import { MembersLiveVideo } from "./MembersLiveVideo";
 export const RemotionRoot: React.FC = () => {
   return (
     <>
-      {/* ── Members Live: badge → terminal reveal (1080×1920 @ 30fps, ~19s) ── */}
       <Composition
         id="MembersLiveVideo"
         component={MembersLiveVideo}
-        durationInFrames={1020}
+        durationInFrames={780}
         fps={30}
         width={1080}
         height={1920}
       />
-
-      {/* ── Hermes: 25s Apple-white swing-trading video (1080×1920 @ 30fps) ── */}
       <Composition
         id="HermesVideo"
         component={HermesVideo}
@@ -27,8 +24,6 @@ export const RemotionRoot: React.FC = () => {
         width={1080}
         height={1920}
       />
-
-      {/* Original hello-world compositions */}
       <Composition
         id="HelloWorld"
         component={HelloWorld}
